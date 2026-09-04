@@ -705,7 +705,7 @@ const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i >
 
 const DRAWS = [
   { key:"gutshot",   label:"Gutshot straight draw",    short:"Gutshot",      outs:4  },
-  { key:"overcards", label:"Two overcards",            short:"Overcards",    outs:8  },
+  { key:"overcards", label:"Two overcards",            short:"Overcards",    outs:6  }, // 3 unseen of each overrank (one of each is in your hand)
   { key:"oesd",      label:"Open-ended straight draw", short:"OESD",         outs:8  },
   { key:"flush",     label:"Flush draw",               short:"Flush draw",   outs:9  },
   { key:"flushoc",   label:"Flush + gutshot combo",    short:"Flush + gut",  outs:12 },
