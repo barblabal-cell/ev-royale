@@ -775,9 +775,12 @@ function buildCards(drawKey, street) {
       return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), [fs[1]]) };
     }
     case "overcards": {
+      // any two distinct ranks T..A are true overcards over these low boards:
+      // one of each is in your hand -> 3 unseen of each rank = 6 outs
       const boards = [[2,7,9],[2,5,8],[3,7,9],[2,6,9],[3,6,8],[2,7,5]];
       const ranks = pick(boards);
-      const hand = [mk(14, "s"), mk(13, "h")];
+      const highs = shuffle([10,11,12,13,14]);
+      const hand = [mk(highs[0], "s"), mk(highs[1], "h")];
       const board = [mk(ranks[0], "d"), mk(ranks[1], "c"), mk(ranks[2], "s")];
       return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), ["h"]) };
     }
@@ -791,10 +794,13 @@ function buildCards(drawKey, street) {
       return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), [fs[1]]) };
     }
     case "flush": {
+      // any four suited ranks + one off-suit card; the validator (retry loop)
+      // rejects accidental straight potential, leaving a pure 9-out flush draw
       const fs = pick(SUITS);
       const off = pick(SUITS.filter((x) => x !== fs));
-      const hand = [mk(9, fs), mk(8, fs)];
-      const board = [mk(13, fs), mk(5, fs), mk(2, off)];
+      const pool = shuffle([2,3,4,5,6,7,8,9,10,11,12,13,14]);
+      const hand = [mk(pool[0], fs), mk(pool[1], fs)];
+      const board = [mk(pool[2], fs), mk(pool[3], fs), mk(pool[4], off)];
       return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), [fs]) };
     }
     case "flushoc": {
@@ -878,14 +884,56 @@ function outsBreakdown(s) {
   return { groups, total: union.size };
 }
 
+/** hand-proven constructions, used only if 80 random tries never validate */
+const FALLBACK_BUILDERS = {
+  gutshot(street) {
+    const hand = [mk(6, "s"), mk(7, "h")];
+    const board = [mk(9, "d"), mk(10, "c"), mk(3, "s")];
+    return { hand, outsRanks: [8], board: withTurn(board, street, [3,6,7,8,9,10], ["h"]) };
+  },
+  overcards(street) {
+    const hand = [mk(14, "s"), mk(13, "h")];
+    const board = [mk(2, "d"), mk(7, "c"), mk(9, "s")];
+    return { hand, outsRanks: [], board: withTurn(board, street, [2,7,9,13,14], ["h"]) };
+  },
+  oesd(street) {
+    const hand = [mk(6, "s"), mk(7, "h")];
+    const board = [mk(8, "d"), mk(9, "c"), mk(13, "s")];
+    return { hand, outsRanks: [5,10], board: withTurn(board, street, [5,6,7,8,9,10,13], ["h"]) };
+  },
+  flush(street) {
+    const hand = [mk(9, "h"), mk(8, "h")];
+    const board = [mk(13, "h"), mk(5, "h"), mk(2, "c")];
+    return { hand, outsRanks: [], board: withTurn(board, street, [2,5,8,9,13], ["h"]) };
+  },
+  flushoc(street) {
+    const hand = [mk(12, "h"), mk(11, "h")];
+    const board = [mk(14, "h"), mk(13, "h"), mk(2, "c")];
+    return { hand, outsRanks: [10], board: withTurn(board, street, [2,10,11,12,13,14], ["h"]) };
+  },
+  flushoesd(street) {
+    const hand = [mk(11, "h"), mk(10, "h")];
+    const board = [mk(9, "h"), mk(8, "h"), mk(2, "c")];
+    return { hand, outsRanks: [7,12], board: withTurn(board, street, [2,7,8,9,10,11,12], ["h"]) };
+  },
+};
+
 function generateScenario(mode, stakes, tolerance) {
   const street = mode === "mix" ? (Math.random() < 0.5 ? "flop" : "turn") : mode;
-  let built = buildCards("flush", street);
-  let draw = DRAWS[3];
+  let built = null;
+  let draw = null;
   for (let i = 0; i < 80; i++) {
-    draw = pick(DRAWS);
-    built = buildCards(draw.key, street);
-    if (cardsAreClean(built.hand, built.board, built.outsRanks, FLUSH_KEYS.indexOf(draw.key) !== -1)) break;
+    const d = pick(DRAWS);
+    const b = buildCards(d.key, street);
+    if (cardsAreClean(b.hand, b.board, b.outsRanks, FLUSH_KEYS.indexOf(d.key) !== -1)) {
+      draw = d;
+      built = b;
+      break;
+    }
+  }
+  if (!built) {
+    draw = DRAWS[3]; // flush draw — the deterministic shape below is hand-proven exact
+    built = FALLBACK_BUILDERS.flush(street);
   }
   const equity = equityFor(draw.outs, street);
   const cfg = STAKES_RANGE[stakes];
