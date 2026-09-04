@@ -237,6 +237,7 @@ button{font-family:inherit;cursor:pointer}
 .ts-value-wrap{margin-top:.25rem;display:flex;align-items:baseline;justify-content:center;gap:.25rem}
 @keyframes tickerUp{0%{opacity:0;transform:translateY(10px) scale(.9)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .ts-value{font-family:var(--font-mono);font-size:2.25rem;font-weight:700;letter-spacing:-.02em;color:var(--brass-300);animation:tickerUp .22s cubic-bezier(.2,1.2,.4,1) both}
+.ts-unit{font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--cream-600);letter-spacing:.14em;text-transform:uppercase}
 @keyframes cursorBlink{0%,55%{opacity:1}56%,100%{opacity:0}}
 .ts-cursor{display:inline-block;width:3px;height:2rem;margin-left:-2px;border-radius:2px;background:var(--brass-400);animation:cursorBlink 1.1s steps(1) infinite}
 .ts-hint{margin:.25rem 0 0;text-align:center;font-family:var(--font-mono);font-size:10.5px;color:var(--cream-600)}
@@ -476,7 +477,9 @@ button{font-family:inherit;cursor:pointer}
 .reveal.reveal-in{opacity:1;transform:translateY(0)}
 
 /* ---------- responsive ---------- */
+.eq-flop{display:none}
 @media (min-width:640px){
+  .eq-flop{display:table-cell}
   .header-inner{padding:.75rem 1.5rem}
   .hide-sm{display:flex}
   .hide-sm.blockish{display:block}
@@ -610,9 +613,9 @@ button{font-family:inherit;cursor:pointer}
         <div class="seg">
           <span class="seg-label">Precision</span>
           <div class="seg-group" id="segTol">
-            <button type="button" class="seg-btn" data-seg="tol" data-val="5">±5 exact</button>
-            <button type="button" class="seg-btn" data-seg="tol" data-val="20">±20</button>
-            <button type="button" class="seg-btn" data-seg="tol" data-val="50">±50 loose</button>
+            <button type="button" class="seg-btn" data-seg="tol" data-val="1">±1 exact</button>
+            <button type="button" class="seg-btn" data-seg="tol" data-val="2">±2</button>
+            <button type="button" class="seg-btn" data-seg="tol" data-val="5">±5 loose</button>
           </div>
         </div>
       </div>
@@ -862,8 +865,9 @@ function generateScenario(mode, stakes, tolerance) {
   }
   const equity = equityFor(draw.outs, street);
   const cfg = STAKES_RANGE[stakes];
-  const floorMag = Math.max(cfg.minMag, tolerance * 2 + 15);
-  let pot = cfg.potMin, bet = cfg.minBet, ev = 0;
+  // the graded answer: how many percentage points equity sits above (or below) pot odds
+  const floorEdge = tolerance + 1.5;
+  let pot = cfg.potMin, bet = cfg.minBet, edge = 0;
   for (let i = 0; i < 200; i++) {
     const steps = (cfg.potMax - cfg.potMin) / cfg.potStep;
     pot = cfg.potMin + rnd(steps + 1) * cfg.potStep;
@@ -871,14 +875,14 @@ function generateScenario(mode, stakes, tolerance) {
     const raw = pot * frac;
     const unit = stakes === "high" ? 25 : 5;
     bet = Math.max(cfg.minBet, Math.min(pot, Math.round(raw / unit) * unit));
-    ev = callEV(equity, pot, bet);
-    if (Math.abs(ev) >= floorMag) break;
+    edge = Math.round((equity - requiredEquity(pot, bet)) * 10) / 10;
+    if (Math.abs(edge) >= floorEdge) break;
   }
   return {
     id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
     createdAt: Date.now(), street, draw,
     hand: built.hand, board: built.board,
-    pot, bet, equity, actualEV: ev,
+    pot, bet, equity, edge,
   };
 }
 
@@ -900,9 +904,9 @@ function decomposeChips(amount) {
 }
 
 /* ------------------------------ storage ------------------------------ */
-const HIST_KEY = "evroyale.history.v1";
-const SET_KEY = "evroyale.settings.v1";
-const DEFAULT_SETTINGS = { streetMode:"mix", stakes:"mid", tolerance:20, music:true, sfx:true };
+const HIST_KEY = "evroyale.history.v2"; // v2: graded in percentage points, not €
+const SET_KEY = "evroyale.settings.v2";
+const DEFAULT_SETTINGS = { streetMode:"mix", stakes:"mid", tolerance:2, music:true, sfx:true };
 
 function loadHistory() {
   try {
@@ -918,8 +922,25 @@ function saveHistory(h) {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SET_KEY);
-    if (!raw) return Object.assign({}, DEFAULT_SETTINGS);
-    return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+    if (raw) {
+      const s = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+      if ([1, 2, 5].indexOf(s.tolerance) === -1) s.tolerance = DEFAULT_SETTINGS.tolerance;
+      return s;
+    }
+    // carry preferences over from the euro-era trainer, converting € tolerance to points
+    const oldRaw = localStorage.getItem("evroyale.settings.v1");
+    if (oldRaw) {
+      const old = JSON.parse(oldRaw);
+      const map = { 5: 1, 20: 2, 50: 5 };
+      return Object.assign({}, DEFAULT_SETTINGS, {
+        streetMode: old.streetMode || DEFAULT_SETTINGS.streetMode,
+        stakes: old.stakes || DEFAULT_SETTINGS.stakes,
+        tolerance: map[old.tolerance] || DEFAULT_SETTINGS.tolerance,
+        music: old.music !== false,
+        sfx: old.sfx !== false,
+      });
+    }
+    return Object.assign({}, DEFAULT_SETTINGS);
   } catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
 }
 function saveSettings(s) {
@@ -1385,9 +1406,10 @@ function keypadHTML(disabled, canSubmit) {
       digit("4") + digit("5") + digit("6") +
       digit("1") + digit("2") + digit("3") +
       digit("0", true) +
+      '<button type="button" class="key tall brass-txt" data-key="dot"' + dAttr + ' aria-label="decimal point">.</button>' +
     '</div>' +
-    '<button type="button" class="key-gold" data-key="submit"' + (disabled || !canSubmit ? " disabled" : "") + '>LOCK IN EV</button>' +
-    '<p class="keypad-hint">⏎ enter locks in · ± minus toggles sign · ⌫ deletes</p>' +
+    '<button type="button" class="key-gold" data-key="submit"' + (disabled || !canSubmit ? " disabled" : "") + '>LOCK IN EDGE</button>' +
+    '<p class="keypad-hint">⏎ enter locks in · . decimal · ± toggles sign</p>' +
   '</div>';
   return html;
 }
@@ -1402,18 +1424,21 @@ function coachStepHTML(n, title, body) {
   '</div>';
 }
 
+function fmtPts(n) {
+  const v = Math.round(n * 10) / 10;
+  return (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(1);
+}
+
 function verdictHTML(s, r, tolerance) {
   const req = requiredEquity(s.pot, s.bet);
-  const plusEV = s.actualEV > 0;
+  const plusEV = s.edge > 0;
   const exact = exactEquity(s.draw.outs, s.street);
-  const eq = s.equity / 100;
-  const winSide = s.pot + s.bet;
   const mult = s.street === "flop" ? 4 : 2;
 
   let head = '<div class="verdict-head ' + (r.correct ? "ok" : "bad") + '">' +
     '<div>' +
       '<h3>' + (r.correct ? "¡Correcto! Bien jugado" : "Not quite, amigo") + '</h3>' +
-      '<p>actual EV of the call: <b>' + fmtMoney(r.actual) + '</b></p>' +
+      '<p>the real edge — equity vs pot odds: <b>' + fmtPts(r.actual) + ' pts</b></p>' +
     '</div>' +
     '<div class="verdict-check ' + (r.correct ? "ok" : "bad") + '">' +
       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
@@ -1422,41 +1447,45 @@ function verdictHTML(s, r, tolerance) {
     '</div>' +
   '</div>' +
   '<div class="verdict-stats">' +
-    '<div class="vcell"><p class="l">Your EV</p><p class="v ' + (r.correct ? "v-good" : "v-bad") + '">' + fmtMoney(r.entered) + '</p></div>' +
-    '<div class="vcell"><p class="l">Deviation</p><p class="v v-plain">€' + r.dev + '</p></div>' +
+    '<div class="vcell"><p class="l">Your edge</p><p class="v ' + (r.correct ? "v-good" : "v-bad") + '">' + fmtPts(r.entered) + ' pts</p></div>' +
+    '<div class="vcell"><p class="l">Deviation</p><p class="v v-plain">' + r.dev.toFixed(1) + ' pts</p></div>' +
     '<div class="vcell"><p class="l">' + (plusEV ? "+EV read" : "−EV read") + '</p><p class="v ' + (r.signOk ? "v-good" : "v-bad") + '">' + (r.signOk ? "correct" : "missed") + '</p></div>' +
   '</div>';
 
   let body;
   if (r.correct) {
     body = '<div class="recap">' +
-      '<p><span class="brass">equity</span> = ' + s.draw.outs + ' outs × ' + mult + ' = ' + s.equity + '% <span class="dim">· needs ' + req.toFixed(1) + '%</span></p>' +
-      '<p><span class="brass">EV</span> = ' + s.equity + '% × €' + winSide + ' − ' + (100 - s.equity) + '% × €' + s.bet + ' = <b>' + fmtMoney(s.actualEV) + '</b> → ' + (plusEV ? "call, +EV" : "fold, −EV") + '</p>' +
-      '<p class="meta">tolerance ±€' + tolerance + ' · sign ' + (r.signOk ? "✓" : "✗") + ' · magnitude ✓</p>' +
+      '<p><span class="brass">equity</span> = ' + s.draw.outs + ' outs × ' + mult + ' = ' + s.equity + '% <span class="dim">· exact ' + exact.toFixed(1) + '%</span></p>' +
+      '<p><span class="brass">pot odds</span> = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' = needs ' + req.toFixed(1) + '%</p>' +
+      '<p><span class="brass">edge</span> = ' + s.equity + '% − ' + req.toFixed(1) + '% = <b>' + fmtPts(s.edge) + ' pts</b> → ' + (plusEV ? "call, +EV" : "fold, −EV") + '</p>' +
+      '<p class="meta">tolerance ±' + tolerance + ' pts · sign ' + (r.signOk ? "✓" : "✗") + ' · magnitude ✓</p>' +
     '</div>';
   } else {
     /* ---- diagnose why the number was off ---- */
     let diag = "";
-    const implied = (r.entered + s.bet) / (s.pot + 2 * s.bet);
-    const wrongStreetEq = equityFor(s.draw.outs, s.street === "flop" ? "turn" : "flop") / 100;
+    const impliedEq = r.entered + req; // the equity the player's edge implies
+    const wrongStreetEq = equityFor(s.draw.outs, s.street === "flop" ? "turn" : "flop");
+    const euroEV = callEV(s.equity, s.pot, s.bet);
     if (!r.signOk) {
       diag = "Direction is the decisive miss here: " + s.equity + "% equity versus a " + req.toFixed(1) + "% breakeven — the draw " +
-        (s.equity > req ? "clears the bar, so the call prints money" : "does not clear the bar, so the call bleeds money") +
+        (s.equity > req ? "clears the bar, so the edge is positive" : "does not clear the bar, so the edge is negative") +
         ". Before any arithmetic, anchor on the shortcut: equity vs pot odds tells you the sign instantly.";
-    } else if (Math.abs(implied - wrongStreetEq) <= 0.03) {
+    } else if (Math.abs(impliedEq - wrongStreetEq) <= 3) {
       diag = s.street === "flop"
-        ? "Your number implies ≈" + Math.round(wrongStreetEq * 100) + "% equity — that is the Rule of 2. On the flop two cards are still to come (turn and river), so multiply the outs by 4: " + s.draw.outs + " × 4 = " + s.equity + "%."
-        : "Your number implies ≈" + Math.round(wrongStreetEq * 100) + "% equity — that is the Rule of 4. After the turn only the river is left, so multiply the outs by 2: " + s.draw.outs + " × 2 = " + s.equity + "%.";
-    } else if (Math.abs(implied - req / 100) <= 0.02) {
-      diag = "You entered the pot-odds breakeven (€" + s.bet + " ÷ €" + (s.pot + 2 * s.bet) + " ≈ " + req.toFixed(0) +
-        "%) — that is the minimum equity a call needs, not the EV itself. The EV is equity × what you can win, minus what you risk.";
-    } else if (Math.abs(r.entered - eq * s.pot) <= Math.max(3, s.pot * 0.015)) {
-      diag = "Close — that is equity × the current pot (€" + Math.round(eq * s.pot) + "). But when you hit, you collect the pot plus the call you matched (€" + winSide +
-        "), and when you miss you lose your €" + s.bet + " call: EV = " + s.equity + "% × €" + winSide + " − " + (100 - s.equity) + "% × €" + s.bet + ".";
+        ? "Your number implies ≈" + Math.round(wrongStreetEq) + "% equity — that is the Rule of 2. On the flop two cards are still to come (turn and river), so multiply the outs by 4: " + s.draw.outs + " × 4 = " + s.equity + "%, and " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts."
+        : "Your number implies ≈" + Math.round(wrongStreetEq) + "% equity — that is the Rule of 4. After the turn only the river is left, so multiply the outs by 2: " + s.draw.outs + " × 2 = " + s.equity + "%, and " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
+    } else if (Math.abs(r.entered - s.equity) <= 1.5) {
+      diag = "You entered your equity itself (" + s.equity + "%). The edge is not the equity — it is how far the equity sits above the bar the pot is offering: " +
+        s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
+    } else if (Math.abs(r.entered - req) <= 1.5) {
+      diag = "You entered the pot-odds breakeven (€" + s.bet + " ÷ €" + (s.pot + 2 * s.bet) + " ≈ " + req.toFixed(1) +
+        "%) — that is the bar, not the distance to it. The edge is equity minus that bar: " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
+    } else if (Math.abs(r.entered - euroEV) <= Math.max(3, Math.abs(euroEV) * 0.05)) {
+      diag = "That is the EV of the call in euros (≈" + fmtMoney(euroEV) + ") — old habit! This table grades the decision itself: how many percentage points your equity (" +
+        s.equity + "%) beats the pot odds (" + req.toFixed(1) + "%) by → " + fmtPts(s.edge) + " pts.";
     } else {
-      diag = "Re-run the arithmetic slowly, one operation at a time: " + s.draw.outs + " outs × " + mult + " = " + s.equity + "% equity → " +
-        s.equity + "% × €" + winSide + " = €" + (eq * winSide).toFixed(0) + " you win when it hits, minus " + (100 - s.equity) + "% × €" + s.bet +
-        " = €" + ((1 - eq) * s.bet).toFixed(0) + " you lose when it misses → " + fmtMoney(s.actualEV) + ".";
+      diag = "Re-run it slowly, one operation at a time: " + s.draw.outs + " outs × " + mult + " = " + s.equity + "% equity. Pot odds: €" + s.bet +
+        " to call into €" + (s.pot + 2 * s.bet) + " = needs " + req.toFixed(1) + "%. Edge = " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
     }
 
     const bd = outsBreakdown(s);
@@ -1472,7 +1501,7 @@ function verdictHTML(s, r, tolerance) {
     body = '<div class="coach">' +
       '<div class="coach-head">' +
         '<p class="t">The correct read, step by step</p>' +
-        '<span class="answer-chip">answer ' + fmtMoney(s.actualEV) + '</span>' +
+        '<span class="answer-chip">answer ' + fmtPts(s.edge) + ' pts</span>' +
       '</div>' +
       '<div class="coach-steps">' +
         coachStepHTML("I", "Count your outs — " + bd.total + " cards help you", stepI) +
@@ -1483,19 +1512,19 @@ function verdictHTML(s, r, tolerance) {
           '<span class="mono">' + s.draw.outs + ' × ' + mult + ' = ' + s.equity + '%</span> <span class="dim">· exact ' + exact.toFixed(1) + '%</span></p>') +
         coachStepHTML("III", "What the pot is offering",
           '<p>Calling <span class="mono">€' + s.bet + '</span> grows the pot to <span class="mono">€' + (s.pot + 2 * s.bet) +
-          '</span>. Breakeven equity = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' = <span class="mono">' + req.toFixed(1) + '%</span>.</p>' +
-          '<p>' + s.equity + '% ' + (s.equity > req ? "beats" : "falls short of") + ' ' + req.toFixed(1) + '% → ' +
-          '<span class="' + (plusEV ? "plus" : "minus") + '">' + (plusEV ? "the call is +EV" : "the call is −EV") + '</span>' +
-          ' <span class="dim">— this shortcut alone gives you the sign.</span></p>') +
-        coachStepHTML("IV", "The EV of the call",
-          '<p class="mono">EV = ' + s.equity + '% × €' + winSide + ' − ' + (100 - s.equity) + '% × €' + s.bet + '</p>' +
-          '<p class="mono">&nbsp;&nbsp;&nbsp;&nbsp;= €' + (eq * winSide).toFixed(0) + ' − €' + ((1 - eq) * s.bet).toFixed(0) + ' = <b>' + fmtMoney(s.actualEV) + '</b></p>' +
-          '<p class="dim" style="font-size:10.5px;margin-top:4px">win side = current pot + the call you match · lose side = your call</p>') +
+          '</span>. Pot odds = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' → you need <span class="mono">' + req.toFixed(1) + '%</span> equity to break even.</p>') +
+        coachStepHTML("IV", "The edge — what you're graded on",
+          '<p class="mono">edge = equity − pot odds</p>' +
+          '<p class="mono">&nbsp;&nbsp;&nbsp;&nbsp;= ' + s.equity + '% − ' + req.toFixed(1) + '% = <b>' + fmtPts(s.edge) + ' pts</b></p>' +
+          '<p>' + (plusEV
+            ? 'Positive — your equity clears the bar, so <span class="plus">the call is +EV</span>.'
+            : 'Negative — your equity misses the bar, so <span class="minus">the call is −EV</span>.') +
+          ' <span class="dim">The sign alone tells you whether to call.</span></p>') +
       '</div>' +
       '<div class="diag-box">' +
         '<p class="l">Where your read went off</p>' +
         '<p class="d">' + diag + '</p>' +
-        '<p class="m">you entered ' + fmtMoney(r.entered) + ' · correct is ' + fmtMoney(s.actualEV) + ' · off by €' + r.dev + ' · tolerance ±€' + tolerance + '</p>' +
+        '<p class="m">you entered ' + fmtPts(r.entered) + ' pts · correct is ' + fmtPts(s.edge) + ' pts · off by ' + r.dev.toFixed(1) + ' pts · tolerance ±' + tolerance + ' pts</p>' +
       '</div>' +
     '</div>';
   }
@@ -1507,19 +1536,20 @@ function verdictHTML(s, r, tolerance) {
 
 function terminalHTML() {
   const disabled = S.phase !== "deal";
-  const displayValue = (S.sign === "-" ? "−" : "+") + "€" + (S.digits || "0");
+  const displayValue = (S.sign === "-" ? "−" : "+") + (S.digits || "0");
   const verdict = S.phase === "revealed" && S.result ? verdictHTML(S.scenario, S.result, S.settings.tolerance) : "";
   return '<div class="term-head">' +
-    '<p class="t">Betting terminal</p>' +
+    '<p class="t">Edge terminal</p>' +
     '<div class="dots"><i></i><i></i><i></i></div>' +
   '</div>' +
   '<div class="terminal-screen">' +
-    '<div class="ts-row"><span class="a">call EV — your number</span><span class="b">±€' + S.settings.tolerance + ' tol.</span></div>' +
+    '<div class="ts-row"><span class="a">equity edge — your number</span><span class="b">±' + S.settings.tolerance + ' pts tol.</span></div>' +
     '<div class="ts-value-wrap" aria-live="polite">' +
       '<span class="ts-value">' + displayValue + '</span>' +
+      '<span class="ts-unit">pts</span>' +
       (S.phase === "deal" ? '<span class="ts-cursor"></span>' : '') +
     '</div>' +
-    '<p class="ts-hint">' + (S.phase === "deal" ? "positive = profitable call · negative = losing call" : "locked in — the dealer checks your math") + '</p>' +
+    '<p class="ts-hint">' + (S.phase === "deal" ? "equity % − pot odds % · positive = call prints · negative = fold" : "locked in — the dealer checks your math") + '</p>' +
   '</div>' +
   keypadHTML(disabled, S.digits.length > 0) +
   verdict;
@@ -1631,9 +1661,9 @@ function statsPanelHTML() {
           '<span class="hr-draw">' + r.drawLabel + '</span>' +
           '<span class="hr-money">pot €' + r.pot + ' · bet €' + r.bet + '</span>' +
           '<span class="hr-nums">' +
-            '<span class="' + (ok ? "you-ok" : "you-bad") + '">' + (r.entered > 0 ? "+" + r.entered : r.entered) + '</span>' +
+            '<span class="' + (ok ? "you-ok" : "you-bad") + '">' + fmtPts(r.entered) + '</span>' +
             '<span class="arrow"> → </span>' +
-            '<span class="act">' + (r.actual > 0 ? "+" + r.actual : r.actual) + '</span>' +
+            '<span class="act">' + fmtPts(r.actual) + ' pts</span>' +
           '</span>' +
           '<span class="hr-time">' + fmtTime(r.ms) + '</span>' +
         '</li>';
@@ -1678,7 +1708,7 @@ function statsPanelHTML() {
     kpiHTML("Hands", String(stats.attempts), stats.correct + " correct") +
     kpiHTML("Accuracy", stats.attempts ? stats.accuracy.toFixed(1) + "%" : "—", prev ? "vs previous period" : "first period", true, delta) +
     kpiHTML("Direction", stats.attempts ? stats.signAccuracy.toFixed(0) + "%" : "—", "+EV / −EV read") +
-    kpiHTML("Avg deviation", stats.attempts ? "€" + stats.avgDev.toFixed(0) : "—", "|yours − actual|") +
+    kpiHTML("Avg deviation", stats.attempts ? stats.avgDev.toFixed(1) + " pts" : "—", "|yours − actual|") +
     kpiHTML("Avg think time", stats.attempts ? fmtTime(stats.avgMs) : "—", "per hand") +
   '</div>' +
   '<div class="chart-card reveal">' +
@@ -1701,8 +1731,8 @@ function statsPanelHTML() {
         '<p class="card-title">House rules</p>' +
         '<ul>' +
           '<li><i>◆</i> Equity: outs × 4 on the flop, outs × 2 on the turn.</li>' +
-          '<li><i>◆</i> EV(call) = equity × (pot + 2·bet) − bet.</li>' +
-          '<li><i>◆</i> If EV &gt; 0 the call is +EV — else fold like a gentleman.</li>' +
+          '<li><i>◆</i> Pot odds: call ÷ (pot + 2·call) — the equity bar you must clear.</li>' +
+          '<li><i>◆</i> Edge = equity − pot odds. Positive → call; negative → fold like a gentleman.</li>' +
         '</ul>' +
       '</div>' +
       '<div class="danger-card reveal">' +
@@ -1719,7 +1749,7 @@ function helpHTML() {
     '<tr>' +
       '<td class="name">' + d.label + '</td>' +
       '<td class="outs">' + d.outs + '</td>' +
-      '<td class="eq" style="display:none">' + Math.min(96, d.outs * 4) + '%</td>' +
+      '<td class="eq eq-flop">' + Math.min(96, d.outs * 4) + '%</td>' +
       '<td class="eq">' + Math.min(96, d.outs * 2) + '%</td>' +
     '</tr>').join("");
   return '<div class="modal-head">' +
@@ -1742,28 +1772,35 @@ function helpHTML() {
       '</div>' +
     '</section>' +
     '<section>' +
-      '<h3>3 · Compute the EV of the call</h3>' +
+      '<h3>3 · The pot odds bar</h3>' +
       '<div class="formula-card">' +
-        '<p class="f">EV = equity × (pot + 2 × bet) − bet</p>' +
-        '<p>Example — flop, flush draw (9 outs → 36%), pot €120, bet €80:<br>' +
-        '<span class="mono">0.36 × (120 + 160) − 80 = 0.36 × 280 − 80 = 100.8 − 80 ≈ <strong>+€21</strong> → call</span></p>' +
+        '<p class="f">pot odds = call ÷ (pot + 2 × call)</p>' +
+        '<p>Example — pot €120, villain bets €80: you risk €80 for a €280 pot → you need 80 ÷ 280 ≈ <strong>28.6%</strong> equity to break even on a call.</p>' +
       '</div>' +
-      '<p>Same answer via pot odds: you risk €80 to win €280 → you need 80/280 ≈ 28.6% equity. You have ~36% → the call prints money.</p>' +
     '</section>' +
     '<section>' +
-      '<h3>4 · Punch it in</h3>' +
-      '<p>Type the EV on the keypad — <strong>sign included</strong> (+ for a profitable call, − for a losing one). Round to whole euros. Precision mode sets the tolerance: exact ±5, casual ±20, loose ±50. After each hand the dealer shows the full solution — and if you miss, the coach walks through every step.</p>' +
+      '<h3>4 · The edge — what you&#39;re graded on</h3>' +
+      '<div class="formula-card">' +
+        '<p class="f">edge = equity − pot odds</p>' +
+        '<p>Same example, flop flush draw (9 outs → 36%):<br>' +
+        '<span class="mono">36% − 28.6% = <strong>+7.4 pts</strong> → call</span>. Had it come out negative, the draw would miss the bar → fold.</p>' +
+      '</div>' +
+      '<p>No euros, no rounding to money — just the raw percentage-point distance between your equity and the bar the pot sets. The sign alone tells you whether the call is +EV.</p>' +
+    '</section>' +
+    '<section>' +
+      '<h3>5 · Punch it in</h3>' +
+      '<p>Type the edge on the keypad — <strong>sign included</strong> (+ when equity beats pot odds, − when it falls short), one decimal is fine (e.g. <span class="mono">7.4</span>). Precision mode sets the tolerance: exact ±1, casual ±2, loose ±5 pts. After each hand the dealer shows the full solution — and if you miss, the coach walks through every step.</p>' +
     '</section>' +
     '<section>' +
       '<h3>The draws you&#39;ll face</h3>' +
       '<div class="draws-table"><table>' +
-        '<thead><tr><th>Draw</th><th>Outs</th><th style="display:none">Flop equity</th><th>Turn equity</th></tr></thead>' +
+        '<thead><tr><th>Draw</th><th>Outs</th><th class="eq-flop">Flop equity</th><th>Turn equity</th></tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table></div>' +
     '</section>' +
     '<section class="kbd-note">' +
       suitIconHTML("s", 26) +
-      '<p><strong>Keyboard:</strong> digits type directly, <span class="k">−</span> toggles sign, <span class="k">⌫</span> deletes, <span class="k">Enter</span> locks in, <span class="k">N</span> deals the next hand.</p>' +
+      '<p><strong>Keyboard:</strong> digits type directly, <span class="k">.</span> (or <span class="k">,</span>) decimal point, <span class="k">−</span> toggles sign, <span class="k">⌫</span> deletes, <span class="k">Enter</span> locks in, <span class="k">N</span> deals the next hand.</p>' +
     '</section>' +
   '</div>';
 }
@@ -1801,7 +1838,7 @@ function renderTable() {
   $("#tableScene").innerHTML = tableSceneHTML(S.scenario, S.result ? { correct: S.result.correct } : null);
   $("#handPrompt").innerHTML =
     'Villain bets <b>€' + usd(S.scenario.bet) + '</b> into <b>€' + usd(S.scenario.pot) +
-    '</b> — is your call <span class="plus">+EV</span> or <span class="minus">−EV</span>? Compute it, then lock in the number.';
+    '</b> — how many <b>percentage points</b> does your equity beat (or miss) the pot odds by? Sign included, then lock it in.';
 }
 function renderTerminal() { $("#terminal").innerHTML = terminalHTML(); }
 function renderSession() { $("#sessionStrip").innerHTML = sessionStripHTML(); }
@@ -1858,10 +1895,11 @@ function newHand() {
 
 function submit() {
   if (S.phase !== "deal" || S.digits.length === 0) return;
-  const n = parseInt(S.digits, 10);
+  const n = parseFloat(S.digits);
+  if (!isFinite(n)) return;
   const entered = S.sign === "-" && n !== 0 ? -n : n;
-  const actual = S.scenario.actualEV;
-  const dev = Math.abs(entered - actual);
+  const actual = S.scenario.edge;
+  const dev = Math.round(Math.abs(entered - actual) * 10) / 10;
   const correct = dev <= S.settings.tolerance;
   const signOk = entered === 0 ? actual === 0 : Math.sign(entered) === Math.sign(actual);
 
@@ -1897,7 +1935,12 @@ function submit() {
 function handleKey(kind, payload) {
   if (S.phase !== "deal") return;
   if (kind === "digit") {
-    if (S.digits.length < 6) S.digits += payload;
+    if (payload === ".") {
+      // one decimal point, placed after at least one digit
+      if (S.digits.indexOf(".") === -1 && S.digits.length > 0 && S.digits.length < 5) S.digits += ".";
+    } else if (S.digits.length < 5) {
+      S.digits += payload;
+    }
   } else if (kind === "sign") {
     S.sign = S.sign === "+" ? "-" : "+";
   } else if (kind === "back") {
@@ -1944,6 +1987,7 @@ document.addEventListener("click", (e) => {
     const k = keyBtn.dataset.key;
     if (k === "submit") sound.keyGold(); else sound.keyTap();
     if (/^[0-9]$/.test(k)) handleKey("digit", k);
+    else if (k === "dot") handleKey("digit", ".");
     else handleKey(k);
     return;
   }
@@ -1995,6 +2039,7 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   if (/^[0-9]$/.test(e.key)) { sound.keyTap(); handleKey("digit", e.key); }
+  else if (e.key === "." || e.key === ",") { sound.keyTap(); handleKey("digit", "."); }
   else if (e.key === "Backspace") { sound.keyTap(); handleKey("back"); }
   else if (e.key === "-" || e.key === "+") { sound.keyTap(); handleKey("sign"); }
   else if (e.key === "Enter") { e.preventDefault(); sound.keyGold(); handleKey("submit"); }
