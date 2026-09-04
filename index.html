@@ -154,6 +154,21 @@ button{font-family:inherit;cursor:pointer}
 .placard .p-draw{margin:.2rem 0 0;font-family:var(--font-display);font-size:13px;font-weight:600;line-height:1.2;color:var(--cream-100)}
 .placard .p-outs{margin:.3rem 0 0;display:inline-flex;align-items:center;gap:.375rem;background:rgba(217,164,65,.15);border-radius:999px;padding:.125rem .5rem;font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--brass-300)}
 .placard .p-outs i{width:6px;height:6px;border-radius:50%;background:var(--brass-400)}
+.placard .p-outs-q{border:1px dashed rgba(217,164,65,.5);background:rgba(217,164,65,.08);color:var(--brass-400);animation:goldPulse 2.4s ease-in-out infinite}
+.placard .p-outs-q i{background:var(--rouge-400)}
+.outs-chip{margin:.625rem 0 0;padding:.4rem .75rem;border-radius:8px;border:1px solid rgba(62,156,124,.45);background:rgba(6,35,26,.75);font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;color:var(--cream-400)}
+.outs-chip b{color:var(--felt-400)}
+.hr-outs{font-family:var(--font-mono);font-size:.7rem;font-weight:700;padding:.1rem .35rem;border-radius:4px;border:1px solid}
+.hr-outs.ok{color:var(--felt-400);border-color:rgba(62,156,124,.5)}
+.hr-outs.bad{color:var(--rouge-400);border-color:rgba(212,71,95,.5)}
+.port-card{border:1px solid rgba(217,164,65,.2);background:rgba(8,12,10,.7);border-radius:16px;padding:1.25rem}
+.port-card .p-sub{margin:.5rem 0 0;font-size:.8125rem;line-height:1.55;color:var(--cream-400)}
+.port-btns{display:flex;gap:.5rem;margin-top:.75rem}
+.port-btn{flex:1;border-radius:8px;padding:.5rem .5rem;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .18s ease;border:1px solid rgba(217,164,65,.4);background:rgba(217,164,65,.1);color:var(--brass-300)}
+.port-btn:hover{background:rgba(217,164,65,.2);border-color:rgba(217,164,65,.7)}
+.port-btn.warn{border-color:rgba(212,71,95,.5);background:rgba(58,11,20,.35);color:var(--rouge-400)}
+.port-btn.warn:hover{background:rgba(164,36,59,.25)}
+.port-note{margin:.625rem 0 0;font-family:var(--font-mono);font-size:.7rem;color:var(--cream-600)}
 .board-row{position:absolute;left:50%;top:50%;transform:translate(-50%,-58%);display:flex;align-items:center;gap:.375rem;z-index:10}
 .board-gap{width:.5rem}
 .turn-slot{width:52px;height:74px;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(217,164,65,.3);border-radius:9%}
@@ -291,6 +306,7 @@ button{font-family:inherit;cursor:pointer}
 .verdict-check.ok{border-color:var(--brass-400);color:var(--brass-300)}
 .verdict-check.bad{border-color:var(--rouge-400);color:var(--rouge-400)}
 .verdict-stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;border-top:1px solid rgba(217,164,65,.1)}
+.verdict-stats.four{grid-template-columns:repeat(4,1fr)}
 .vcell{padding:.625rem .5rem;border-left:1px solid rgba(217,164,65,.1)}
 .vcell:first-child{border-left:0}
 .vcell .l{margin:0;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--cream-600)}
@@ -611,6 +627,13 @@ button{font-family:inherit;cursor:pointer}
           </div>
         </div>
         <div class="seg">
+          <span class="seg-label">Outs</span>
+          <div class="seg-group" id="segOuts">
+            <button type="button" class="seg-btn" data-seg="outsmode" data-val="given">Given</button>
+            <button type="button" class="seg-btn" data-seg="outsmode" data-val="hidden">Hidden</button>
+          </div>
+        </div>
+        <div class="seg">
           <span class="seg-label">Precision</span>
           <div class="seg-group" id="segTol">
             <button type="button" class="seg-btn" data-seg="tol" data-val="1">±1 exact</button>
@@ -647,6 +670,7 @@ button{font-family:inherit;cursor:pointer}
   <div class="modal-card" id="helpCard"></div>
 </div>
 
+<input type="file" id="importFile" accept=".json,application/json" style="display:none" aria-hidden="true">
 <noscript><p style="padding:2rem;text-align:center;font-family:sans-serif">EV Royale needs JavaScript to deal the cards.</p></noscript>
 
 <script>
@@ -681,7 +705,7 @@ const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i >
 
 const DRAWS = [
   { key:"gutshot",   label:"Gutshot straight draw",    short:"Gutshot",      outs:4  },
-  { key:"overcards", label:"Two overcards",            short:"Overcards",    outs:6  },
+  { key:"overcards", label:"Two overcards",            short:"Overcards",    outs:8  },
   { key:"oesd",      label:"Open-ended straight draw", short:"OESD",         outs:8  },
   { key:"flush",     label:"Flush draw",               short:"Flush draw",   outs:9  },
   { key:"flushoc",   label:"Flush + gutshot combo",    short:"Flush + gut",  outs:12 },
@@ -771,7 +795,7 @@ function buildCards(drawKey, street) {
       const off = pick(SUITS.filter((x) => x !== fs));
       const hand = [mk(9, fs), mk(8, fs)];
       const board = [mk(13, fs), mk(5, fs), mk(2, off)];
-      return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), []) };
+      return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), [fs]) };
     }
     case "flushoc": {
       // suited Q-J over A-K of the same suit + low card: 9 flush + 4 gutshot − 1 overlap = 12
@@ -780,7 +804,7 @@ function buildCards(drawKey, street) {
       const hand = [mk(12, fs), mk(11, fs)];
       const board = [mk(14, fs), mk(13, fs), mk(2 + rnd(3), off)];
       const outsRanks = [10];
-      return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), []) };
+      return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), [fs]) };
     }
     case "flushoesd": {
       // suited J-T on 9-8 two-flush board: 9 flush + 8 straight − 2 overlap = 15
@@ -789,7 +813,7 @@ function buildCards(drawKey, street) {
       const hand = [mk(11, fs), mk(10, fs)];
       const board = [mk(9, fs), mk(8, fs), mk(2, off)];
       const outsRanks = [7, 12];
-      return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), []) };
+      return { hand, outsRanks, board: withTurn(board, street, usedOf(hand, board).concat(outsRanks), [fs]) };
     }
   }
 }
@@ -906,7 +930,7 @@ function decomposeChips(amount) {
 /* ------------------------------ storage ------------------------------ */
 const HIST_KEY = "evroyale.history.v2"; // v2: graded in percentage points, not €
 const SET_KEY = "evroyale.settings.v2";
-const DEFAULT_SETTINGS = { streetMode:"mix", stakes:"mid", tolerance:2, music:true, sfx:true };
+const DEFAULT_SETTINGS = { streetMode:"mix", stakes:"mid", tolerance:2, outsMode:"given", music:true, sfx:true };
 
 function loadHistory() {
   try {
@@ -1365,8 +1389,9 @@ function tableSceneHTML(s, revealed) {
       '</div>' +
       '<div class="placard-zone"><div class="placard">' +
         '<p class="p-street">' + (isTurn ? "The Turn" : "The Flop") + '</p>' +
-        '<p class="p-draw">' + s.draw.label + '</p>' +
-        '<span class="p-outs"><i></i>' + s.draw.outs + ' outs</span>' +
+        (S.settings.outsMode === "hidden" && !revealed
+          ? '<p class="p-draw">Name it yourself</p><span class="p-outs p-outs-q"><i></i>outs ?</span>'
+          : '<p class="p-draw">' + s.draw.label + '</p><span class="p-outs"><i></i>' + s.draw.outs + ' outs</span>') +
       '</div></div>' +
       '<div class="board-row">' + boardCards + '<div class="board-gap"></div>' + turnCard + '</div>' +
       '<div class="call-strip"><p>call <b>€' + usd(s.bet) + '</b> to win <b>€' + usd(s.pot + s.bet) + '</b></p></div>' +
@@ -1377,7 +1402,9 @@ function tableSceneHTML(s, revealed) {
         '</div>' +
         '<div class="hero-tags">' +
           '<span class="tag">You · Hero</span>' +
-          '<span class="eq">equity ≈ ' + s.equity + '% (rule of ' + (isTurn ? "2" : "4") + ')</span>' +
+          (S.settings.outsMode === "hidden" && !revealed
+            ? '<span class="eq">equity ≈ outs × ' + (isTurn ? "2" : "4") + '</span>'
+            : '<span class="eq">equity ≈ ' + s.equity + '% (rule of ' + (isTurn ? "2" : "4") + ')</span>') +
         '</div>' +
       '</div>' +
       '<div class="dealer-btn">D</div>' +
@@ -1391,13 +1418,14 @@ function tableSceneHTML(s, revealed) {
 const BACKSPACE_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H8L2 12l6 7h13a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"></path><path d="M12 9l6 6M18 9l-6 6"></path></svg>';
 const PLUSMINUS_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 8h10M10 3v10"></path><path d="M9 18h10"></path></svg>';
 
-function keypadHTML(disabled, canSubmit) {
+function keypadHTML(disabled, canSubmit, countingOuts) {
   const dAttr = disabled ? " disabled" : "";
+  const lockAttr = (countingOuts || disabled) ? " disabled" : ""; // no sign / decimal while counting outs
   const digit = (n, wide) =>
     '<button type="button" class="key tall' + (wide ? " wide" : "") + '" data-key="' + n + '"' + dAttr + ' aria-label="digit ' + n + '">' + n + '</button>';
   let html = '<div class="keypad">' +
     '<div class="keypad-grid">' +
-      '<button type="button" class="key short brass-txt" data-key="sign"' + dAttr + ' aria-label="toggle sign" title="Toggle + / −">' + PLUSMINUS_SVG + '</button>' +
+      '<button type="button" class="key short brass-txt" data-key="sign"' + lockAttr + ' aria-label="toggle sign" title="Toggle + / −">' + PLUSMINUS_SVG + '</button>' +
       '<button type="button" class="key short key-rouge" data-key="clear"' + dAttr + ' aria-label="clear entry">C</button>' +
       '<button type="button" class="key short brass-txt" data-key="back"' + dAttr + ' aria-label="backspace">' + BACKSPACE_SVG + '</button>' +
     '</div>' +
@@ -1406,10 +1434,13 @@ function keypadHTML(disabled, canSubmit) {
       digit("4") + digit("5") + digit("6") +
       digit("1") + digit("2") + digit("3") +
       digit("0", true) +
-      '<button type="button" class="key tall brass-txt" data-key="dot"' + dAttr + ' aria-label="decimal point">.</button>' +
+      '<button type="button" class="key tall brass-txt" data-key="dot"' + lockAttr + ' aria-label="decimal point">.</button>' +
     '</div>' +
-    '<button type="button" class="key-gold" data-key="submit"' + (disabled || !canSubmit ? " disabled" : "") + '>LOCK IN EDGE</button>' +
-    '<p class="keypad-hint">⏎ enter locks in · . decimal · ± toggles sign</p>' +
+    '<button type="button" class="key-gold" data-key="submit"' + (disabled || !canSubmit ? " disabled" : "") + '>' +
+      (countingOuts ? "LOCK IN OUTS" : "LOCK IN EDGE") + '</button>' +
+    '<p class="keypad-hint">' +
+      (countingOuts ? "⏎ enter locks in your outs count · step 1 of 2" : "⏎ enter locks in · . decimal · ± toggles sign") +
+    '</p>' +
   '</div>';
   return html;
 }
@@ -1446,7 +1477,10 @@ function verdictHTML(s, r, tolerance) {
       '</svg>' +
     '</div>' +
   '</div>' +
-  '<div class="verdict-stats">' +
+  '<div class="verdict-stats' + (r.outsEntered !== null ? ' four' : '') + '">' +
+    (r.outsEntered !== null
+      ? '<div class="vcell"><p class="l">Your outs</p><p class="v ' + (r.outsOk ? "v-good" : "v-bad") + '">' + r.outsEntered + ' / ' + s.draw.outs + '</p></div>'
+      : "") +
     '<div class="vcell"><p class="l">Your edge</p><p class="v ' + (r.correct ? "v-good" : "v-bad") + '">' + fmtPts(r.entered) + ' pts</p></div>' +
     '<div class="vcell"><p class="l">Deviation</p><p class="v v-plain">' + r.dev.toFixed(1) + ' pts</p></div>' +
     '<div class="vcell"><p class="l">' + (plusEV ? "+EV read" : "−EV read") + '</p><p class="v ' + (r.signOk ? "v-good" : "v-bad") + '">' + (r.signOk ? "correct" : "missed") + '</p></div>' +
@@ -1455,6 +1489,7 @@ function verdictHTML(s, r, tolerance) {
   let body;
   if (r.correct) {
     body = '<div class="recap">' +
+      (r.outsEntered !== null ? '<p><span class="brass">outs</span> = ' + s.draw.outs + ' — counted correctly ✓</p>' : "") +
       '<p><span class="brass">equity</span> = ' + s.draw.outs + ' outs × ' + mult + ' = ' + s.equity + '% <span class="dim">· exact ' + exact.toFixed(1) + '%</span></p>' +
       '<p><span class="brass">pot odds</span> = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' = needs ' + req.toFixed(1) + '%</p>' +
       '<p><span class="brass">edge</span> = ' + s.equity + '% − ' + req.toFixed(1) + '% = <b>' + fmtPts(s.edge) + ' pts</b> → ' + (plusEV ? "call, +EV" : "fold, −EV") + '</p>' +
@@ -1466,7 +1501,15 @@ function verdictHTML(s, r, tolerance) {
     const impliedEq = r.entered + req; // the equity the player's edge implies
     const wrongStreetEq = equityFor(s.draw.outs, s.street === "flop" ? "turn" : "flop");
     const euroEV = callEV(s.equity, s.pot, s.bet);
-    if (!r.signOk) {
+    const bd = outsBreakdown(s);
+    const sizes = bd.groups.map((g) => g.cards.length);
+    const overlap = sizes.reduce((a, b) => a + b, 0) - bd.total;
+    const outsArith = sizes.join(" + ") + (overlap > 0 ? " − " + overlap + " counted twice" : "") + " = " + bd.total;
+    if (r.outsOk === false) {
+      diag = "The count is where it went off: you said " + r.outsEntered + " outs, the table has " + bd.total + " — " + outsArith +
+        ". Every one of them is face-up in step I below. With " + bd.total + " outs the equity is " + s.equity +
+        "% (Rule of " + mult + "), and the edge lands at " + fmtPts(s.edge) + " pts.";
+    } else if (!r.signOk) {
       diag = "Direction is the decisive miss here: " + s.equity + "% equity versus a " + req.toFixed(1) + "% breakeven — the draw " +
         (s.equity > req ? "clears the bar, so the edge is positive" : "does not clear the bar, so the edge is negative") +
         ". Before any arithmetic, anchor on the shortcut: equity vs pot odds tells you the sign instantly.";
@@ -1535,23 +1578,35 @@ function verdictHTML(s, r, tolerance) {
 }
 
 function terminalHTML() {
-  const disabled = S.phase !== "deal";
-  const displayValue = (S.sign === "-" ? "−" : "+") + (S.digits || "0");
+  const countingOuts = S.phase === "outs";
+  const disabled = S.phase === "revealed";
+  const displayValue = countingOuts ? (S.digits || "0") : (S.sign === "-" ? "−" : "+") + (S.digits || "0");
   const verdict = S.phase === "revealed" && S.result ? verdictHTML(S.scenario, S.result, S.settings.tolerance) : "";
+  const outsChip = S.outsEntered !== null && S.phase === "play"
+    ? '<div class="outs-chip">step 1 done — you counted <b>' + S.outsEntered + ' outs</b> · now the edge</div>'
+    : "";
+  const rowLabel = countingOuts ? "your outs — how many cards help you?" : "equity edge — your number";
+  const rowRight = countingOuts ? "exact count" : "±" + S.settings.tolerance + " pts tol.";
+  const hint = disabled
+    ? "locked in — the dealer checks your math"
+    : countingOuts
+      ? "count every card that completes your draw — overlaps count once"
+      : "equity % − pot odds % · positive = call prints · negative = fold";
   return '<div class="term-head">' +
     '<p class="t">Edge terminal</p>' +
     '<div class="dots"><i></i><i></i><i></i></div>' +
   '</div>' +
+  outsChip +
   '<div class="terminal-screen">' +
-    '<div class="ts-row"><span class="a">equity edge — your number</span><span class="b">±' + S.settings.tolerance + ' pts tol.</span></div>' +
+    '<div class="ts-row"><span class="a">' + rowLabel + '</span><span class="b">' + rowRight + '</span></div>' +
     '<div class="ts-value-wrap" aria-live="polite">' +
       '<span class="ts-value">' + displayValue + '</span>' +
-      '<span class="ts-unit">pts</span>' +
-      (S.phase === "deal" ? '<span class="ts-cursor"></span>' : '') +
+      '<span class="ts-unit">' + (countingOuts ? "outs" : "pts") + '</span>' +
+      (!disabled ? '<span class="ts-cursor"></span>' : '') +
     '</div>' +
-    '<p class="ts-hint">' + (S.phase === "deal" ? "equity % − pot odds % · positive = call prints · negative = fold" : "locked in — the dealer checks your math") + '</p>' +
+    '<p class="ts-hint">' + hint + '</p>' +
   '</div>' +
-  keypadHTML(disabled, S.digits.length > 0) +
+  keypadHTML(disabled, S.digits.length > 0, countingOuts) +
   verdict;
 }
 
@@ -1640,6 +1695,10 @@ function statsPanelHTML() {
   const bestEver = bestStreakEver(S.history);
   const delta = prev && prev.attempts > 0 && stats.attempts > 0 ? stats.accuracy - prev.accuracy : null;
   const recent = S.history.slice(-9).reverse();
+  const outsRecs = S.history.filter((r) => r.outsOk === true || r.outsOk === false);
+  const outsReads = outsRecs.length
+    ? Math.round((outsRecs.filter((r) => r.outsOk).length / outsRecs.length) * 100) + "%"
+    : "—";
 
   const tabs = Object.keys(RANGE_LABELS).map((k) =>
     '<button type="button" class="seg-btn' + (range === k ? " seg-on" : "") + '" data-range="' + k + '">' +
@@ -1658,6 +1717,9 @@ function statsPanelHTML() {
             '</svg>' +
           '</span>' +
           '<span class="street-tag ' + r.street + '">' + r.street + '</span>' +
+          ((r.outsOk === true || r.outsOk === false)
+            ? '<span class="hr-outs ' + (r.outsOk ? "ok" : "bad") + '">outs ' + r.outsEntered + '</span>'
+            : "") +
           '<span class="hr-draw">' + r.drawLabel + '</span>' +
           '<span class="hr-money">pot €' + r.pot + ' · bet €' + r.bet + '</span>' +
           '<span class="hr-nums">' +
@@ -1706,8 +1768,9 @@ function statsPanelHTML() {
   '</div>' +
   '<div class="kpi-grid">' +
     kpiHTML("Hands", String(stats.attempts), stats.correct + " correct") +
-    kpiHTML("Accuracy", stats.attempts ? stats.accuracy.toFixed(1) + "%" : "—", prev ? "vs previous period" : "first period", true, delta) +
+    kpiHTML("Accuracy", stats.attempts ? stats.accuracy.toFixed(1) + "%" : "—", prev ? "vs previous period" : "first period", false, delta) +
     kpiHTML("Direction", stats.attempts ? stats.signAccuracy.toFixed(0) + "%" : "—", "+EV / −EV read") +
+    kpiHTML("Outs reads", outsReads, "hidden-outs hands") +
     kpiHTML("Avg deviation", stats.attempts ? stats.avgDev.toFixed(1) + " pts" : "—", "|yours − actual|") +
     kpiHTML("Avg think time", stats.attempts ? fmtTime(stats.avgMs) : "—", "per hand") +
   '</div>' +
@@ -1735,6 +1798,20 @@ function statsPanelHTML() {
           '<li><i>◆</i> Edge = equity − pot odds. Positive → call; negative → fold like a gentleman.</li>' +
         '</ul>' +
       '</div>' +
+      '<div class="port-card reveal">' +
+        '<p class="card-title">Take it with you</p>' +
+        '<p class="p-sub">Your ledger lives in <strong style="color:var(--cream-200)">this browser only</strong> (localStorage). Export it as a JSON file, open this page on another machine and import it — same stats, same rank.</p>' +
+        (S.importState
+          ? '<div class="burn-row" style="margin-top:.75rem">' +
+              '<button type="button" class="btn btn-danger" data-act="do-import">Replace with ' + S.importState.count + ' hands</button>' +
+              '<button type="button" class="btn btn-ghost" data-act="cancel-import">Cancel</button>' +
+            '</div>'
+          : '<div class="port-btns">' +
+              '<button type="button" class="port-btn" data-act="export">Export ledger</button>' +
+              '<button type="button" class="port-btn warn" data-act="ask-import">Import…</button>' +
+            '</div>') +
+        '<p class="port-note">' + S.history.length + ' hands on record · plain JSON, human-readable</p>' +
+      '</div>' +
       '<div class="danger-card reveal">' +
         '<p class="card-title">Danger zone</p>' +
         '<p>Burn the ledger and start from zero. The pit boss won&#39;t ask questions.</p>' +
@@ -1742,6 +1819,32 @@ function statsPanelHTML() {
       '</div>' +
     '</div>' +
   '</div>';
+}
+
+/* ------------------------------ ledger portability ------------------------------ */
+function exportLedger() {
+  const payload = {
+    app: "ev-royale",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    settings: S.settings,
+    history: S.history,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ev-royale-ledger-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.appendChild(a);
+  a.click();
+  window.setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function parseLedgerFile(text) {
+  const data = JSON.parse(text);
+  const list = Array.isArray(data) ? data : data.history;
+  if (!Array.isArray(list)) throw new Error("no history array");
+  const clean = list.filter((r) => r && typeof r.t === "number" && typeof r.entered === "number" && typeof r.actual === "number" && typeof r.correct === "boolean");
+  if (!clean.length) throw new Error("no valid hands");
+  return clean.sort((x, y) => x.t - y.t);
 }
 
 function helpHTML() {
@@ -1762,7 +1865,11 @@ function helpHTML() {
   '<div class="help-body">' +
     '<section>' +
       '<h3>1 · Read the table</h3>' +
-      '<p>Every hand you are the <em>Hero</em> with a known draw. The placard names it and its <strong>outs</strong>. The villain has bet into the pot — you must decide about the <strong>call</strong>.</p>' +
+      '<p>Every hand you are the <em>Hero</em> facing a bet, with a draw waiting to be counted. The <strong>Outs</strong> switch above the table sets the difficulty:</p>' +
+      '<ul style="margin:.5rem 0 0;padding-left:1.1rem;color:var(--cream-400)">' +
+        '<li style="margin:.25rem 0"><strong style="color:var(--cream-200)">Given</strong> — the placard names the draw and its exact outs; you only compute pot odds and the edge.</li>' +
+        '<li style="margin:.25rem 0"><strong style="color:var(--cream-200)">Hidden</strong> — the placard stays silent. First count the outs yourself (exact count required), then compute the edge. Draws overlap (flush cards that also complete a straight count once), so count carefully.</li>' +
+      '</ul>' +
     '</section>' +
     '<section>' +
       '<h3>2 · Estimate equity — Rule of 4 &amp; 2</h3>' +
@@ -1789,7 +1896,7 @@ function helpHTML() {
     '</section>' +
     '<section>' +
       '<h3>5 · Punch it in</h3>' +
-      '<p>Type the edge on the keypad — <strong>sign included</strong> (+ when equity beats pot odds, − when it falls short), one decimal is fine (e.g. <span class="mono">7.4</span>). Precision mode sets the tolerance: exact ±1, casual ±2, loose ±5 pts. After each hand the dealer shows the full solution — and if you miss, the coach walks through every step.</p>' +
+      '<p>Type the edge on the keypad — <strong>sign included</strong> (+ when equity beats pot odds, − when it falls short), one decimal is fine (e.g. <span class="mono">7.4</span>). Precision mode sets the tolerance: exact ±1, casual ±2, loose ±5 pts. In <strong>Outs: Hidden</strong> mode the terminal first asks for your outs count (whole number, exact), then asks for the edge — a hand only scores if both are right. After each hand the dealer shows the full solution — and if you miss, the coach walks through every step.</p>' +
     '</section>' +
     '<section>' +
       '<h3>The draws you&#39;ll face</h3>' +
@@ -1810,16 +1917,20 @@ const S = {
   settings: loadSettings(),
   history: loadHistory(),
   scenario: null,
-  phase: "deal",
+  phase: "play",        // "outs" (count outs) → "play" (enter edge) → "revealed"
   sign: "+",
   digits: "",
+  outsEntered: null,    // hidden-outs mode: the player's counted outs
+  outsOk: null,
   result: null,
   range: "week",
   confirmClear: false,
+  importState: null,    // pending ledger import awaiting confirmation
   helpOpen: false,
   dealStart: Date.now(),
 };
 S.scenario = generateScenario(S.settings.streetMode, S.settings.stakes, S.settings.tolerance);
+if (S.settings.outsMode === "hidden") S.phase = "outs";
 
 /* scroll reveals */
 const revealIO = ("IntersectionObserver" in window)
@@ -1836,9 +1947,12 @@ function observeReveals() {
 
 function renderTable() {
   $("#tableScene").innerHTML = tableSceneHTML(S.scenario, S.result ? { correct: S.result.correct } : null);
+  const hidden = S.settings.outsMode === "hidden";
   $("#handPrompt").innerHTML =
-    'Villain bets <b>€' + usd(S.scenario.bet) + '</b> into <b>€' + usd(S.scenario.pot) +
-    '</b> — how many <b>percentage points</b> does your equity beat (or miss) the pot odds by? Sign included, then lock it in.';
+    'Villain bets <b>€' + usd(S.scenario.bet) + '</b> into <b>€' + usd(S.scenario.pot) + '</b> — ' +
+    (hidden
+      ? 'first <b>count your outs</b> exactly, then compute the edge: how many <b>percentage points</b> does your equity beat (or miss) the pot odds by?'
+      : 'how many <b>percentage points</b> does your equity beat (or miss) the pot odds by? Sign included, then lock it in.');
 }
 function renderTerminal() { $("#terminal").innerHTML = terminalHTML(); }
 function renderSession() { $("#sessionStrip").innerHTML = sessionStripHTML(); }
@@ -1850,6 +1964,7 @@ function renderSegs() {
   const map = [
     ["#segStreet", "streetMode", S.settings.streetMode],
     ["#segStakes", "stakes", S.settings.stakes],
+    ["#segOuts", "outsMode", S.settings.outsMode],
     ["#segTol", "tolerance", String(S.settings.tolerance)],
   ];
   map.forEach((row) => {
@@ -1883,9 +1998,11 @@ function renderHeader() {
 
 function newHand() {
   S.scenario = generateScenario(S.settings.streetMode, S.settings.stakes, S.settings.tolerance);
-  S.phase = "deal";
+  S.phase = S.settings.outsMode === "hidden" ? "outs" : "play";
   S.sign = "+";
   S.digits = "";
+  S.outsEntered = null;
+  S.outsOk = null;
   S.result = null;
   S.dealStart = Date.now();
   sound.cardDeal();
@@ -1893,15 +2010,30 @@ function newHand() {
   renderTerminal();
 }
 
+/** hidden-outs mode, step 1: lock in the counted outs */
+function lockOuts() {
+  if (S.phase !== "outs" || S.digits.length === 0) return;
+  const n = parseInt(S.digits, 10);
+  if (!isFinite(n) || n < 0) return;
+  S.outsEntered = n;
+  S.outsOk = n === S.scenario.draw.outs;
+  S.digits = "";
+  S.sign = "+";
+  S.phase = "play";
+  renderTerminal();
+}
+
+/** step 2 (both modes): lock in the edge — graded against the real edge */
 function submit() {
-  if (S.phase !== "deal" || S.digits.length === 0) return;
+  if (S.phase !== "play" || S.digits.length === 0) return;
   const n = parseFloat(S.digits);
   if (!isFinite(n)) return;
   const entered = S.sign === "-" && n !== 0 ? -n : n;
   const actual = S.scenario.edge;
   const dev = Math.round(Math.abs(entered - actual) * 10) / 10;
-  const correct = dev <= S.settings.tolerance;
+  const edgeOk = dev <= S.settings.tolerance;
   const signOk = entered === 0 ? actual === 0 : Math.sign(entered) === Math.sign(actual);
+  const correct = edgeOk && S.outsOk !== false; // a miscounted outs step fails the hand
 
   S.history.push({
     t: Date.now(),
@@ -1911,11 +2043,13 @@ function submit() {
     pot: S.scenario.pot,
     bet: S.scenario.bet,
     actual, entered, correct, signOk,
+    outsEntered: S.outsEntered, // null when outs were given
+    outsOk: S.outsOk,
     ms: Date.now() - S.dealStart,
     tolerance: S.settings.tolerance,
   });
   saveHistory(S.history);
-  S.result = { entered, actual, correct, signOk, dev };
+  S.result = { entered, actual, correct, edgeOk, signOk, dev, outsEntered: S.outsEntered, outsOk: S.outsOk };
   S.phase = "revealed";
   sound.submit();
   window.setTimeout(() => (correct ? sound.correct() : sound.wrong()), 240);
@@ -1933,23 +2067,24 @@ function submit() {
 }
 
 function handleKey(kind, payload) {
-  if (S.phase !== "deal") return;
+  if (S.phase === "revealed") return;
+  const countingOuts = S.phase === "outs";
   if (kind === "digit") {
     if (payload === ".") {
-      // one decimal point, placed after at least one digit
-      if (S.digits.indexOf(".") === -1 && S.digits.length > 0 && S.digits.length < 5) S.digits += ".";
-    } else if (S.digits.length < 5) {
+      // decimals only for the edge; outs are whole cards
+      if (!countingOuts && S.digits.indexOf(".") === -1 && S.digits.length > 0 && S.digits.length < 5) S.digits += ".";
+    } else if (S.digits.length < (countingOuts ? 2 : 5)) {
       S.digits += payload;
     }
   } else if (kind === "sign") {
-    S.sign = S.sign === "+" ? "-" : "+";
+    if (!countingOuts) S.sign = S.sign === "+" ? "-" : "+"; // outs are never negative
   } else if (kind === "back") {
     S.digits = S.digits.slice(0, -1);
   } else if (kind === "clear") {
     S.digits = "";
-    S.sign = "+";
+    if (!countingOuts) S.sign = "+";
   } else if (kind === "submit") {
-    submit();
+    if (countingOuts) lockOuts(); else submit();
     return;
   }
   renderTerminal();
@@ -1997,6 +2132,7 @@ document.addEventListener("click", (e) => {
     const val = segBtn.dataset.val;
     if (seg === "street") updateSettings({ streetMode: val }, true);
     else if (seg === "stakes") updateSettings({ stakes: val }, true);
+    else if (seg === "outsmode") updateSettings({ outsMode: val }, true);
     else if (seg === "tol") updateSettings({ tolerance: parseInt(val, 10) }, true);
     return;
   }
@@ -2014,6 +2150,19 @@ document.addEventListener("click", (e) => {
     else if (act === "close-help") { S.helpOpen = false; $("#helpModal").classList.add("hidden"); }
     else if (act === "ask-reset") { S.confirmClear = true; renderStats(); }
     else if (act === "cancel-reset") { S.confirmClear = false; renderStats(); }
+    else if (act === "export") { exportLedger(); }
+    else if (act === "ask-import") { S.importState = null; $("#importFile").click(); }
+    else if (act === "cancel-import") { S.importState = null; renderStats(); }
+    else if (act === "do-import") {
+      if (S.importState) {
+        S.history = S.importState.data;
+        saveHistory(S.history);
+        S.importState = null;
+        renderStats();
+        renderSession();
+        renderHeader();
+      }
+    }
     else if (act === "do-reset") {
       S.history = [];
       saveHistory([]);
@@ -2044,6 +2193,25 @@ window.addEventListener("keydown", (e) => {
   else if (e.key === "-" || e.key === "+") { sound.keyTap(); handleKey("sign"); }
   else if (e.key === "Enter") { e.preventDefault(); sound.keyGold(); handleKey("submit"); }
   else if (e.key === "Escape") { sound.keyTap(); handleKey("clear"); }
+});
+
+$("#importFile").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const clean = parseLedgerFile(String(reader.result));
+      S.importState = { data: clean, count: clean.length };
+      renderStats();
+    } catch (err) {
+      S.importState = null;
+      renderStats();
+      window.alert("That file does not look like an EV Royale ledger — nothing was changed.");
+    }
+  };
+  reader.readAsText(file);
 });
 
 $("#musicBtn").addEventListener("click", () => {
