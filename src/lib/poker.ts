@@ -33,7 +33,7 @@ export const DRAWS: DrawDef[] = [
   { key: "overcards", label: "Two overcards", short: "Overcards", outs: 6 },
   { key: "oesd", label: "Open-ended straight draw", short: "OESD", outs: 8 },
   { key: "flush", label: "Flush draw", short: "Flush draw", outs: 9 },
-  { key: "flushoc", label: "Flush + two overcards", short: "Flush + overs", outs: 13 },
+  { key: "flushoc", label: "Flush + gutshot straight", short: "Flush + gut", outs: 12 },
   { key: "flushoesd", label: "Combo: flush + OESD", short: "Combo draw", outs: 15 },
 ];
 
@@ -102,10 +102,12 @@ function straightOutRanks(cards: CardT[]): Set<number> {
 }
 
 /** visible cards must produce exactly the declared outs — no hidden extras, no missing ones */
-function cardsAreClean(hand: CardT[], board: CardT[], outsRanks: number[]): boolean {
+function cardsAreClean(hand: CardT[], board: CardT[], outsRanks: number[], flushKey: boolean): boolean {
   const suitCount: Record<string, number> = {};
   [...hand, ...board].forEach((cd) => (suitCount[cd.suit] = (suitCount[cd.suit] ?? 0) + 1));
-  if (Object.values(suitCount).some((n) => n > 3)) return false; // never an accidental 4-flush
+  // flush draws intentionally hold 4 of a suit; everything else must stay ≤ 3 (no accidental 4-flush)
+  const maxSuit = flushKey ? 4 : 3;
+  if (Object.values(suitCount).some((n) => n > maxSuit)) return false;
 
   const actual = straightOutRanks([...hand, ...board]);
   const declared = new Set(outsRanks);
@@ -162,12 +164,13 @@ function buildCards(draw: DrawKey, street: Street): BuiltCards {
       return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), []) };
     }
     case "flushoc": {
-      // suited A-K over low two-flush board: 9 flush + 6 overcards − 2 overlap = 13
+      // suited Q-J over A-K of the same suit + low card: 9 flush + 4 gutshot − 1 overlap = 12
       const fs = pick(SUITS);
       const off = pick(SUITS.filter((x) => x !== fs));
-      const hand = [c(14, fs), c(13, fs)];
-      const board = [c(8, fs), c(4, fs), c(2, off)];
-      return { hand, outsRanks: [], board: withTurn(board, street, usedOf(hand, board), []) };
+      const hand = [c(12, fs), c(11, fs)];
+      const board = [c(14, fs), c(13, fs), c(2 + rnd(3), off)];
+      const outsRanks = [10];
+      return { hand, outsRanks, board: withTurn(board, street, [...usedOf(hand, board), ...outsRanks], []) };
     }
     case "flushoesd": {
       // suited J-T on 9-8 two-flush board: 9 flush + 8 straight − 2 overlap = 15
@@ -221,16 +224,86 @@ export function requiredEquity(pot: number, bet: number): number {
   return (bet / (pot + 2 * bet)) * 100;
 }
 
+/** exact hitting chance: two cards to come on the flop, one on the turn */
+export function exactEquity(outs: number, street: Street): number {
+  const miss = street === "flop"
+    ? ((47 - outs) * (46 - outs)) / (47 * 46)
+    : (47 - outs) / 47;
+  return (1 - miss) * 100;
+}
+
+/* ------------- outs breakdown for the coach explanation ------------- */
+
+export interface OutsGroup {
+  label: string;
+  cards: CardT[];
+  note?: string;
+}
+
+/** the real, enumerable cards that complete the announced draw — grouped by category */
+export function outsBreakdown(s: Scenario): { groups: OutsGroup[]; total: number } {
+  const all = [...s.hand, ...s.board];
+  const usedKeys = new Set(all.map((cd) => `${cd.rank}${cd.suit}`));
+  const unseenWhere = (pred: (cd: CardT) => boolean): CardT[] => {
+    const out: CardT[] = [];
+    for (let r = 2; r <= 14; r++) {
+      for (const suit of SUITS) {
+        if (!usedKeys.has(`${r}${suit}`) && pred({ rank: r, suit })) out.push({ rank: r, suit });
+      }
+    }
+    return out;
+  };
+
+  const key = s.draw.key;
+  const groups: OutsGroup[] = [];
+  const straightRanks = [...straightOutRanks(all)].sort((a, b) => a - b);
+  const flushSuit = s.hand[0].suit === s.hand[1].suit ? s.hand[0].suit : null;
+  const isFlush = key === "flush" || key === "flushoc" || key === "flushoesd";
+
+  if (isFlush && flushSuit) {
+    groups.push({
+      label: `any remaining ${SUIT_NAME[flushSuit].toLowerCase()} completes the flush`,
+      cards: unseenWhere((cd) => cd.suit === flushSuit),
+    });
+  }
+  if (straightRanks.length) {
+    const cards = unseenWhere((cd) => straightRanks.includes(cd.rank));
+    const overlap = flushSuit && isFlush ? cards.filter((cd) => cd.suit === flushSuit) : [];
+    groups.push({
+      label: `a ${straightRanks.map((r) => RANK_LABEL[r]).join(" or ")} completes the straight`,
+      cards,
+      note: overlap.length
+        ? `${overlap.map(cardName).join(" and ")} also make the flush — count them once`
+        : undefined,
+    });
+  }
+  const maxBoard = Math.max(...s.board.map((cd) => cd.rank));
+  const overRanks = [...new Set(s.hand.map((cd) => cd.rank))]
+    .filter((r) => r > maxBoard && !straightRanks.includes(r))
+    .sort((a, b) => b - a);
+  if (overRanks.length && key === "overcards") {
+    groups.push({
+      label: `an ${overRanks.map((r) => RANK_LABEL[r]).join(" or ")} pairs up top`,
+      cards: unseenWhere((cd) => overRanks.includes(cd.rank)),
+    });
+  }
+
+  const union = new Set<string>();
+  groups.forEach((g) => g.cards.forEach((cd) => union.add(`${cd.rank}${cd.suit}`)));
+  return { groups, total: union.size };
+}
+
 export function generateScenario(mode: StreetMode, stakes: Stakes, tolerance: number): Scenario {
   const street: Street = mode === "mix" ? (Math.random() < 0.5 ? "flop" : "turn") : mode;
 
   // draw + cards, regenerated until the visible outs are exactly the declared ones
+  const FLUSH_KEYS: DrawKey[] = ["flush", "flushoc", "flushoesd"];
   let built: BuiltCards = buildCards("flush", street);
   let draw = DRAWS[3];
   for (let i = 0; i < 80; i++) {
     draw = pick(DRAWS);
     built = buildCards(draw.key, street);
-    if (cardsAreClean(built.hand, built.board, built.outsRanks)) break;
+    if (cardsAreClean(built.hand, built.board, built.outsRanks, FLUSH_KEYS.includes(draw.key))) break;
   }
 
   const equity = equityFor(draw.outs, street);

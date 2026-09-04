@@ -1,10 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { HelpModal } from "./components/HelpModal";
 import { Keypad, type KeyAction } from "./components/Keypad";
+import { PlayingCard } from "./components/PlayingCard";
 import { StatsPanel } from "./components/StatsPanel";
 import { TableScene } from "./components/TableScene";
 import { sound } from "./lib/audio";
-import { generateScenario, requiredEquity, type Scenario, type Stakes, type StreetMode } from "./lib/poker";
+import {
+  equityFor,
+  exactEquity,
+  generateScenario,
+  outsBreakdown,
+  requiredEquity,
+  type Scenario,
+  type Stakes,
+  type StreetMode,
+} from "./lib/poker";
 import {
   currentStreak,
   loadHistory,
@@ -87,10 +97,57 @@ interface Result {
   dev: number;
 }
 
+function CoachStep({ n, title, children }: { n: string; title: string; children: ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-brass-500/40 font-display text-[11px] font-bold text-brass-300">
+        {n}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cream-100">{title}</p>
+        <div className="mt-1 text-[11.5px] leading-relaxed text-cream-400">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function Verdict({ s, r, tolerance, onNext }: { s: Scenario; r: Result; tolerance: number; onNext: () => void }) {
   const req = requiredEquity(s.pot, s.bet);
   const plusEV = s.actualEV > 0;
   const fmt = (n: number) => (n > 0 ? `+€${n.toLocaleString("en-US")}` : `−€${Math.abs(n).toLocaleString("en-US")}`);
+  const { groups, total } = useMemo(() => outsBreakdown(s), [s]);
+  const exact = exactEquity(s.draw.outs, s.street);
+  const eq = s.equity / 100;
+  const winSide = s.pot + s.bet; // what you collect when the draw hits
+  const mult = s.street === "flop" ? 4 : 2;
+
+  /* ---- diagnose why the player's number was off ---- */
+  let diag = "";
+  if (!r.correct) {
+    const implied = (r.entered + s.bet) / (s.pot + 2 * s.bet); // equity implied by the entered EV
+    const wrongStreetEq = equityFor(s.draw.outs, s.street === "flop" ? "turn" : "flop") / 100;
+    if (!r.signOk) {
+      diag = `Direction is the decisive miss here: ${s.equity}% equity versus a ${req.toFixed(1)}% breakeven — the draw ${
+        s.equity > req ? "clears the bar, so the call prints money" : "does not clear the bar, so the call bleeds money"
+      }. Before any arithmetic, anchor on the shortcut: equity vs pot odds tells you the sign instantly.`;
+    } else if (Math.abs(implied - wrongStreetEq) <= 0.03) {
+      diag =
+        s.street === "flop"
+          ? `Your number implies ≈${Math.round(wrongStreetEq * 100)}% equity — that is the Rule of 2. On the flop two cards are still to come (turn and river), so multiply the outs by 4: ${s.draw.outs} × 4 = ${s.equity}%.`
+          : `Your number implies ≈${Math.round(wrongStreetEq * 100)}% equity — that is the Rule of 4. After the turn only the river is left, so multiply the outs by 2: ${s.draw.outs} × 2 = ${s.equity}%.`;
+    } else if (Math.abs(implied - req / 100) <= 0.02) {
+      diag = `You entered the pot-odds breakeven (€${s.bet} ÷ €${s.pot + 2 * s.bet} ≈ ${req.toFixed(
+        0
+      )}%) — that is the minimum equity a call needs, not the EV itself. The EV is equity × what you can win, minus what you risk.`;
+    } else if (Math.abs(r.entered - eq * s.pot) <= Math.max(3, s.pot * 0.015)) {
+      diag = `Close — that is equity × the current pot (€${Math.round(eq * s.pot)}). But when you hit, you collect the pot plus the call you matched (€${winSide}), and when you miss you lose your €${s.bet} call: EV = ${s.equity}% × €${winSide} − ${100 - s.equity}% × €${s.bet}.`;
+    } else {
+      diag = `Re-run the arithmetic slowly, one operation at a time: ${s.draw.outs} outs × ${mult} = ${s.equity}% equity → ${s.equity}% × €${winSide} = €${(
+        eq * winSide
+      ).toFixed(0)} you win when it hits, minus ${100 - s.equity}% × €${s.bet} = €${((1 - eq) * s.bet).toFixed(0)} you lose when it misses → ${fmt(s.actualEV)}.`;
+    }
+  }
+
   return (
     <div className="verdict-in mt-4 overflow-hidden rounded-xl border border-brass-500/30 bg-ink-950/85">
       <div className={`flex items-center justify-between px-4 py-3 ${r.correct ? "bg-felt-800" : "bg-rouge-950"}`}>
@@ -124,17 +181,98 @@ function Verdict({ s, r, tolerance, onNext }: { s: Scenario; r: Result; toleranc
         </div>
       </div>
 
-      <div className="border-t border-brass-500/15 bg-felt-950/60 px-4 py-3 font-mono text-[11.5px] leading-relaxed text-cream-400">
-        <p>
-          <span className="text-brass-300">equity</span> = {s.draw.outs} outs × {s.street === "flop" ? "4" : "2"} = {s.equity}%
-          <span className="text-cream-600"> · needs {req.toFixed(1)}%</span>
-        </p>
-        <p>
-          <span className="text-brass-300">EV</span> = {s.equity}% × (€{s.pot} + 2×€{s.bet}) − €{s.bet} ={" "}
-          <span className="font-bold text-cream-100">{fmt(s.actualEV)}</span> → {plusEV ? "call, +EV" : "fold, −EV"}
-        </p>
-        <p className="mt-1 text-[10.5px] text-cream-600">tolerance ±€{tolerance} · sign {r.signOk ? "✓" : "✗"} · magnitude {Math.abs(r.dev) <= tolerance ? "✓" : "✗"}</p>
-      </div>
+      {r.correct ? (
+        <div className="border-t border-brass-500/15 bg-felt-950/60 px-4 py-3 font-mono text-[11.5px] leading-relaxed text-cream-400">
+          <p>
+            <span className="text-brass-300">equity</span> = {s.draw.outs} outs × {mult} = {s.equity}%
+            <span className="text-cream-600"> · needs {req.toFixed(1)}%</span>
+          </p>
+          <p>
+            <span className="text-brass-300">EV</span> = {s.equity}% × €{winSide} − {100 - s.equity}% × €{s.bet} ={" "}
+            <span className="font-bold text-cream-100">{fmt(s.actualEV)}</span> → {plusEV ? "call, +EV" : "fold, −EV"}
+          </p>
+          <p className="mt-1 text-[10.5px] text-cream-600">tolerance ±€{tolerance} · sign {r.signOk ? "✓" : "✗"} · magnitude ✓</p>
+        </div>
+      ) : (
+        <div className="border-t border-brass-500/15 bg-felt-950/60 px-4 py-3.5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="font-display text-[11px] font-bold uppercase tracking-[0.22em] text-brass-300">
+              The correct read, step by step
+            </p>
+            <span className="shrink-0 rounded-md border border-brass-400/50 bg-brass-500/10 px-2 py-0.5 font-mono text-xs font-bold text-brass-300">
+              answer {fmt(s.actualEV)}
+            </span>
+          </div>
+
+          <div className="space-y-3.5">
+            <CoachStep n="I" title={`Count your outs — ${total} cards help you`}>
+              <div className="space-y-2.5">
+                {groups.map((g) => (
+                  <div key={g.label}>
+                    <div className="mb-1 flex flex-wrap gap-1">
+                      {g.cards.map((cd) => (
+                        <PlayingCard key={`${cd.rank}${cd.suit}`} card={cd} w={27} variant="board" />
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-cream-400">
+                      <span className="font-bold text-cream-200">{g.cards.length}</span> — {g.label}
+                    </p>
+                    {g.note && <p className="text-[10.5px] italic text-brass-400/90">{g.note}</p>}
+                  </div>
+                ))}
+              </div>
+            </CoachStep>
+
+            <CoachStep n="II" title="Turn outs into equity">
+              <p>
+                {s.street === "flop" ? (
+                  <>Two cards are still to come (turn + river), so use the <span className="text-brass-300">Rule of 4</span>: </>
+                ) : (
+                  <>Only the river is left, so use the <span className="text-brass-300">Rule of 2</span>: </>
+                )}
+                <span className="font-mono text-cream-200">{s.draw.outs} × {mult} = {s.equity}%</span>
+                <span className="text-cream-600"> · exact {exact.toFixed(1)}%</span>
+              </p>
+            </CoachStep>
+
+            <CoachStep n="III" title="What the pot is offering">
+              <p>
+                Calling <span className="font-mono text-cream-200">€{s.bet}</span> grows the pot to{" "}
+                <span className="font-mono text-cream-200">€{s.pot + 2 * s.bet}</span>. Breakeven equity = €{s.bet} ÷ €{s.pot + 2 * s.bet} ={" "}
+                <span className="font-mono text-cream-200">{req.toFixed(1)}%</span>.
+              </p>
+              <p className="mt-0.5">
+                {s.equity}% {s.equity > req ? "beats" : "falls short of"} {req.toFixed(1)}% →{" "}
+                <span className={`font-bold ${plusEV ? "text-felt-400" : "text-rouge-400"}`}>
+                  {plusEV ? "the call is +EV" : "the call is −EV"}
+                </span>
+                <span className="text-cream-600"> — this shortcut alone gives you the sign.</span>
+              </p>
+            </CoachStep>
+
+            <CoachStep n="IV" title="The EV of the call">
+              <p className="font-mono text-cream-300">
+                EV = {s.equity}% × €{winSide} − {100 - s.equity}% × €{s.bet}
+              </p>
+              <p className="font-mono text-cream-300">
+                {"    "}= €{(eq * winSide).toFixed(0)} − €{((1 - eq) * s.bet).toFixed(0)} ={" "}
+                <span className="font-bold text-cream-100">{fmt(s.actualEV)}</span>
+              </p>
+              <p className="mt-1 text-[10.5px] text-cream-600">
+                win side = current pot + the call you match · lose side = your call
+              </p>
+            </CoachStep>
+          </div>
+
+          <div className="mt-3.5 rounded-lg border border-rouge-500/30 bg-rouge-950/40 px-3 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-rouge-400">Where your read went off</p>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-cream-300">{diag}</p>
+            <p className="mt-1.5 font-mono text-[10.5px] text-cream-500">
+              you entered {fmt(r.entered)} · correct is {fmt(s.actualEV)} · off by €{r.dev} · tolerance ±€{tolerance}
+            </p>
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
