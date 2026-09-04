@@ -119,12 +119,12 @@ button{font-family:inherit;cursor:pointer}
 
 /* ---------- the felt table ---------- */
 .felt-rail{
-  border-radius:46%/50%;padding:.5rem;position:relative;
+  border-radius:28%/43%;padding:.5rem;position:relative;
   background:linear-gradient(180deg,#5a3d16 0%,#3a2710 45%,#241708 100%);
   box-shadow:inset 0 2px 2px rgba(246,227,174,.35),inset 0 -3px 8px rgba(0,0,0,.7),0 24px 50px rgba(0,0,0,.6);
 }
 .felt-surface{
-  position:relative;overflow:hidden;border-radius:46%/50%;aspect-ratio:16/9.6;
+  position:relative;overflow:hidden;border-radius:26%/40%;aspect-ratio:16/9.6;
   background:
     radial-gradient(120% 140% at 50% 18%, rgba(246,227,174,.10), transparent 46%),
     radial-gradient(90% 120% at 50% 45%, #175c45 0%, #12503c 42%, #0d3a2c 78%, #0a2e23 100%);
@@ -138,17 +138,17 @@ button{font-family:inherit;cursor:pointer}
 }
 @keyframes sheen{0%,55%{left:-70%}85%,100%{left:130%}}
 .arc-svg{position:absolute;left:0;right:0;top:0;margin:0 auto;width:86%;opacity:.7;pointer-events:none}
-.bet-ring{position:absolute;inset:9%;border-radius:50%;border:1px dashed rgba(217,164,65,.25);pointer-events:none}
+.bet-ring{position:absolute;inset:8%;border-radius:23%/37%;border:1px dashed rgba(217,164,65,.25);pointer-events:none}
 .money-pile{display:flex;flex-direction:column;align-items:center;gap:.25rem}
 .money-pile .mp-label{border-radius:999px;border:1px solid rgba(217,164,65,.4);background:rgba(8,12,10,.6);color:var(--brass-300);padding:.125rem .625rem;font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
 .money-pile.accent .mp-label{border-color:rgba(212,71,95,.6);background:rgba(58,11,20,.7);color:var(--rouge-400)}
 .money-pile .mp-amount{font-family:var(--font-mono);font-size:.875rem;font-weight:700;color:var(--cream-100);text-shadow:0 2px 6px rgba(0,0,0,.8)}
 .mp-stack{filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
 .pot-zone{position:absolute;left:50%;top:11%;transform:translateX(-50%);z-index:10}
-.villain-zone{position:absolute;right:4%;top:5%;z-index:10;display:flex;flex-direction:column;align-items:center}
+.villain-zone{position:absolute;right:12%;top:9%;z-index:10;display:flex;flex-direction:column;align-items:center}
 .villain-tag{margin-top:.25rem;border:1px solid rgba(212,71,95,.4);background:rgba(8,12,10,.7);border-radius:999px;padding:.125rem .5rem;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--rouge-400)}
 .villain-bet{margin-top:.375rem;transform:scale(.9)}
-.placard-zone{position:absolute;left:3.5%;top:5%;z-index:10}
+.placard-zone{position:absolute;left:10%;top:12%;z-index:10}
 .placard{width:132px;border:1px solid rgba(217,164,65,.5);background:rgba(8,12,10,.85);border-radius:8px;padding:.5rem .75rem;box-shadow:0 8px 20px rgba(0,0,0,.5)}
 .placard .p-street{margin:0;font-size:9px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--brass-500)}
 .placard .p-draw{margin:.2rem 0 0;font-family:var(--font-display);font-size:13px;font-weight:600;line-height:1.2;color:var(--cream-100)}
@@ -161,13 +161,13 @@ button{font-family:inherit;cursor:pointer}
 .call-strip{position:absolute;left:50%;top:50%;transform:translate(-50%,26%);z-index:10}
 .call-strip p{margin:0;border:1px solid rgba(217,164,65,.3);background:rgba(8,12,10,.75);border-radius:999px;padding:.25rem .875rem;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:.02em;color:var(--cream-200)}
 .call-strip b{color:var(--brass-300)}
-.hero-zone{position:absolute;bottom:3%;left:4%;z-index:10;display:flex;align-items:flex-end;gap:.5rem}
+.hero-zone{position:absolute;bottom:11%;left:10%;z-index:10;display:flex;align-items:flex-end;gap:.5rem}
 .hero-cards{display:flex}
 .hero-tags{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:.25rem}
 .hero-tags .tag{border:1px solid rgba(217,164,65,.4);background:rgba(8,12,10,.7);border-radius:999px;padding:.125rem .5rem;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-300)}
 .hero-tags .eq{margin-top:.25rem;font-family:var(--font-mono);font-size:10px;color:var(--cream-400)}
-.dealer-btn{position:absolute;bottom:8%;right:9%;z-index:10;width:36px;height:36px;border-radius:50%;border:2px solid var(--cream-200);background:var(--cream-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.875rem;font-weight:900;color:var(--felt-900);box-shadow:0 4px 10px rgba(0,0,0,.5)}
-.verdict-glow{position:absolute;inset:0;z-index:20;border-radius:46%/50%;pointer-events:none;transition:opacity .7s}
+.dealer-btn{position:absolute;bottom:12%;right:12%;z-index:10;width:36px;height:36px;border-radius:50%;border:2px solid var(--cream-200);background:var(--cream-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.875rem;font-weight:900;color:var(--felt-900);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.verdict-glow{position:absolute;inset:0;z-index:20;border-radius:26%/40%;pointer-events:none;transition:opacity .7s}
 .verdict-glow.ok{opacity:1}
 .verdict-glow.bad{opacity:.7}
 .corner-suit{position:absolute;color:rgba(217,164,65,.1);pointer-events:none}
@@ -487,13 +487,13 @@ button{font-family:inherit;cursor:pointer}
   .board-row{gap:.625rem}
   .board-gap{width:1rem}
   .pot-zone{top:12%}
-  .villain-zone{right:7%}
+  .villain-zone{right:11%}
   .villain-bet{transform:scale(1)}
-  .placard-zone{left:6%}
+  .placard-zone{left:9%}
   .placard{width:168px}
   .placard .p-street{font-size:10px}
   .placard .p-draw{font-size:15px}
-  .hero-zone{bottom:5%;left:7%;gap:.75rem}
+  .hero-zone{bottom:10%;left:10%;gap:.75rem}
   .dealer-btn{width:40px;height:40px}
   .ts-value{font-size:42px}
   .terminal{padding:1.25rem}
@@ -1361,7 +1361,7 @@ function tableSceneHTML(s, revealed) {
       '</div>' +
       '<div class="dealer-btn">D</div>' +
       glow + burst +
-      '<div class="corner-suit" style="bottom:6%;right:4%;transform:rotate(12deg)">' + suitIconHTML("h", 54) + '</div>' +
+      '<div class="corner-suit" style="bottom:10%;right:9%;transform:rotate(12deg)">' + suitIconHTML("h", 54) + '</div>' +
       '<div class="corner-suit" style="left:2%;top:46%;transform:rotate(-12deg)">' + suitIconHTML("c", 44) + '</div>' +
     '</div>' +
   '</div>';
