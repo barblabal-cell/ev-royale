@@ -521,6 +521,106 @@ html,body{overscroll-behavior-y:none}
   .seg-label{display:none}
   .ts-value{font-size:30px}
 }
+/* ================================================================
+   SCREENS · LOBBY · ACADEMY (TUTORIAL) · MULTIWAY
+   ================================================================ */
+.screen{animation:screenIn .35s cubic-bezier(.2,1,.35,1) both}
+.screen[hidden]{display:none}
+@keyframes screenIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---- game topbar ---- */
+.game-topbar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.75rem}
+.topbar-back{display:inline-flex;align-items:center;gap:.4rem;border:1px solid rgba(217,164,65,.35);background:rgba(8,12,10,.7);color:var(--brass-300);border-radius:999px;padding:.4rem .9rem;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .18s ease}
+.topbar-back:hover{background:rgba(217,164,65,.16);border-color:rgba(217,164,65,.7);transform:translateX(-2px)}
+.topbar-mode{display:flex;align-items:center;gap:.5rem}
+.topbar-mode .chip{font-family:var(--font-mono);font-size:.72rem;font-weight:700;color:var(--felt-400);border:1px solid rgba(62,156,124,.45);background:rgba(6,35,26,.7);border-radius:999px;padding:.3rem .7rem;letter-spacing:.05em}
+.topbar-mode .chip b{color:var(--brass-300)}
+
+/* ---- lobby ---- */
+.lobby{max-width:1060px;margin:0 auto;padding:3.2rem 1.25rem 2.5rem}
+.lobby-head{max-width:640px;margin:0 0 2.4rem}
+.lobby-head h2{font-family:var(--font-display);font-size:clamp(2rem,4.6vw,3.2rem);line-height:1.05;color:var(--cream-100);margin:.35rem 0 .6rem}
+.lobby-head h2 em{color:var(--brass-400);font-style:italic}
+.lobby-head .sub{color:var(--cream-400);font-size:1.02rem;line-height:1.6;max-width:560px}
+.lobby-grid{display:grid;gap:1.1rem}
+.lobby-academy{grid-column:1/-1;display:flex;align-items:center;gap:1.4rem;text-align:left;width:100%;cursor:pointer;border-radius:18px;padding:1.4rem 1.6rem;border:1px solid rgba(217,164,65,.4);background:linear-gradient(120deg,rgba(74,52,16,.42),rgba(8,12,10,.85) 55%);color:var(--cream-100);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;position:relative;overflow:hidden}
+.lobby-academy::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 120px at 15% 0%,rgba(233,196,106,.12),transparent 60%);pointer-events:none}
+.lobby-academy:hover{transform:translateY(-3px);border-color:rgba(233,196,106,.85);box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.la-badge{flex:none;width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:rgba(217,164,65,.14);border:1px solid rgba(233,196,106,.5);color:var(--brass-400)}
+.la-copy{flex:1;min-width:0}
+.la-copy .t{font-family:var(--font-display);font-size:1.45rem;color:var(--brass-300);margin:0 0 .15rem}
+.la-copy .d{margin:0;color:var(--cream-400);font-size:.92rem;line-height:1.5}
+.la-cta{flex:none;font-family:var(--font-mono);font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-300);border:1px solid rgba(217,164,65,.4);border-radius:999px;padding:.45rem .9rem;transition:all .18s ease}
+.lobby-academy:hover .la-cta{background:var(--brass-500);color:#241708;border-color:var(--brass-500)}
+.lobby-tables{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.lobby-table{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;border-radius:18px;padding:1.7rem 1.4rem 1.4rem;border:1px solid rgba(217,164,65,.22);background:rgba(8,12,10,.78);color:var(--cream-100);overflow:hidden;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.lobby-table::before{content:"";position:absolute;left:50%;top:-70px;width:340px;height:200px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(18,80,60,.5),transparent 70%);pointer-events:none}
+.lobby-table:hover{transform:translateY(-4px);border-color:rgba(233,196,106,.7);box-shadow:0 20px 48px rgba(0,0,0,.5)}
+.lobby-table.multi{border-color:rgba(212,71,95,.3)}
+.lobby-table.multi:hover{border-color:rgba(212,71,95,.75)}
+.lt-felt{position:relative;width:170px;height:104px;margin:0 0 1.05rem;border-radius:50%;background:radial-gradient(ellipse at 50% 38%,#1a6a4f,#0d3a2c 62%,#0a2e23);border:5px solid #3a2710;box-shadow:inset 0 0 24px rgba(0,0,0,.55),0 10px 26px rgba(0,0,0,.4)}
+.lt-felt::after{content:"";position:absolute;inset:12px;border-radius:50%;border:1px dashed rgba(233,196,106,.3)}
+.lt-felt .spade{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:rgba(233,196,106,.5)}
+.lt-seat{position:absolute;width:15px;height:15px;border-radius:50%;background:#12161a;border:2px solid #39424e;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.lt-seat.you{background:var(--brass-500);border-color:var(--brass-300)}
+.lt-name{font-family:var(--font-display);font-size:1.4rem;color:var(--cream-100);margin:0 0 .2rem}
+.lt-vs{font-family:var(--font-mono);font-size:.78rem;color:var(--cream-600);letter-spacing:.06em;margin:0 0 .8rem}
+.lt-pips{display:flex;gap:.4rem;margin-bottom:1rem}
+.lt-pips i{width:9px;height:9px;border-radius:50%;background:rgba(168,151,111,.35)}
+.lt-pips i.on{background:var(--brass-400)}
+.lobby-table.multi .lt-pips i.on{background:var(--rouge-400)}
+.lt-cta{font-family:var(--font-mono);font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-300);border:1px solid rgba(217,164,65,.4);border-radius:999px;padding:.45rem 1rem;transition:all .18s ease}
+.lobby-table:hover .lt-cta{background:var(--brass-500);color:#241708;border-color:var(--brass-500)}
+.lobby-table.multi:hover .lt-cta{background:var(--rouge-500);color:#fff;border-color:var(--rouge-500)}
+@media (max-width:760px){
+  .lobby-tables{grid-template-columns:1fr}
+  .lobby{padding-top:2rem}
+}
+
+/* ---- tutorial / academy ---- */
+.tut{max-width:980px;margin:0 auto;padding:2.4rem 1.25rem 3rem}
+.tut-top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.tut-tabs{display:flex;border:1px solid rgba(217,164,65,.25);background:rgba(8,12,10,.8);border-radius:10px;padding:3px;gap:3px}
+.tut-tab{border:0;background:transparent;color:var(--cream-400);font-size:.82rem;font-weight:700;letter-spacing:.06em;padding:.5rem 1rem;border-radius:8px;cursor:pointer;transition:all .18s ease}
+.tut-tab.on{background:var(--brass-500);color:#241708}
+.tut-tab:not(.on):hover{color:var(--brass-300)}
+.lesson{border:1px solid rgba(217,164,65,.16);background:rgba(8,12,10,.7);border-radius:16px;padding:1.5rem 1.6rem;margin:0 0 1.1rem}
+.lesson h3{font-family:var(--font-display);font-size:1.5rem;color:var(--brass-300);margin:0 0 .5rem;display:flex;align-items:center;gap:.6rem}
+.lesson h3 .num{flex:none;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.95rem;background:rgba(217,164,65,.14);border:1px solid rgba(233,196,106,.5);color:var(--brass-300)}
+.lesson p{margin:.5rem 0;color:var(--cream-400);line-height:1.65;font-size:.95rem}
+.lesson p strong{color:var(--cream-100)}
+.lesson .callout{margin:.9rem 0 0;border-left:3px solid var(--brass-500);background:rgba(217,164,65,.07);padding:.7rem 1rem;border-radius:0 10px 10px 0;color:var(--cream-200);font-size:.9rem;line-height:1.6}
+.lesson .callout.warn{border-left-color:var(--rouge-500);background:rgba(164,36,59,.1)}
+.lesson .mono{font-family:var(--font-mono)}
+.example{margin-top:1rem;border:1px solid rgba(62,156,124,.3);background:rgba(6,35,26,.55);border-radius:12px;padding:1rem 1.15rem}
+.example .e-title{font-family:var(--font-mono);font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--felt-400);margin:0 0 .5rem}
+.example .line{font-family:var(--font-mono);font-size:.88rem;color:var(--cream-200);line-height:1.8}
+.example .line b{color:var(--brass-300)}
+.example .line .good{color:var(--felt-400);font-weight:700}
+.example .line .bad{color:var(--rouge-400);font-weight:700}
+.tut-compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.tut-compare .col{border-radius:12px;padding:1rem 1.1rem}
+.tut-compare .col.h{border:1px solid rgba(217,164,65,.3);background:rgba(74,52,16,.18)}
+.tut-compare .col.m{border:1px solid rgba(212,71,95,.35);background:rgba(58,11,20,.28)}
+.tut-compare .col .h-title{font-family:var(--font-mono);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0 0 .5rem}
+.tut-compare .col.h .h-title{color:var(--brass-300)}
+.tut-compare .col.m .h-title{color:var(--rouge-400)}
+.tut-compare .col .line{font-family:var(--font-mono);font-size:.82rem;color:var(--cream-300,var(--cream-200));line-height:1.8}
+@media (max-width:760px){.tut-compare{grid-template-columns:1fr}}
+
+/* ---- multiway opponents row ---- */
+.villains-row{position:absolute;left:50%;top:4.5%;transform:translateX(-50%);display:flex;gap:.9rem;z-index:10}
+.v-seat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.v-seat .v-cards{display:flex;gap:2px}
+.v-seat .v-tag{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--cream-400);background:rgba(8,12,10,.75);border:1px solid rgba(217,164,65,.25);border-radius:999px;padding:1px 7px;white-space:nowrap}
+.v-seat.bettor .v-tag{color:#241708;background:var(--brass-400);border-color:var(--brass-400)}
+.players-badge{position:absolute;right:4%;bottom:6%;z-index:10;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--cream-400);border:1px solid rgba(217,164,65,.3);background:rgba(8,12,10,.75);border-radius:999px;padding:.25rem .7rem}
+.players-badge b{color:var(--brass-300)}
+@media (max-width:639px){
+  .villains-row{gap:.45rem;top:3%}
+  .v-seat .v-tag{font-size:8px;padding:1px 5px}
+}
+
 /* ---------- responsive ---------- */
 .eq-flop{display:none}
 @media (min-width:640px){
@@ -635,9 +735,18 @@ html,body{overscroll-behavior-y:none}
     </div>
   </header>
 
+  <!-- lobby -->
+  <div id="lobbyScreen" class="screen" hidden></div>
+
+  <!-- tutorial -->
+  <div id="tutorialScreen" class="screen" hidden></div>
+
+  <!-- game -->
+  <div id="gameScreen" class="screen" hidden>
   <!-- main floor -->
   <main class="floor">
     <div class="floor-left">
+      <div id="gameTopbar" class="game-topbar"></div>
       <div class="settings-bar">
         <div class="seg">
           <span class="seg-label">Street</span>
@@ -685,6 +794,7 @@ html,body{overscroll-behavior-y:none}
 
   <!-- ledger -->
   <section class="ledger" id="ledger" aria-label="statistics"></section>
+  </div><!-- /gameScreen -->
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -860,7 +970,8 @@ const STAKES_RANGE = {
 };
 const equityFor = (outs, street) => Math.min(96, outs * (street === "flop" ? 4 : 2));
 const callEV = (equity, pot, bet) => Math.round((equity / 100) * (pot + 2 * bet) - bet);
-const requiredEquity = (pot, bet) => (bet / (pot + 2 * bet)) * 100;
+/** breakeven equity % — with N players in the hand the final pot is pot + N*bet */
+const requiredEquity = (pot, bet, players) => (bet / (pot + (players || 2) * bet)) * 100;
 function exactEquity(outs, street) {
   const miss = street === "flop" ? ((47 - outs) * (46 - outs)) / (47 * 46) : (47 - outs) / 47;
   return (1 - miss) * 100;
@@ -947,7 +1058,8 @@ const FALLBACK_BUILDERS = {
   },
 };
 
-function generateScenario(mode, stakes, tolerance) {
+function generateScenario(mode, stakes, tolerance, players) {
+  players = players || 2;
   const street = mode === "mix" ? (Math.random() < 0.5 ? "flop" : "turn") : mode;
   let built = null;
   let draw = null;
@@ -976,14 +1088,14 @@ function generateScenario(mode, stakes, tolerance) {
     const raw = pot * frac;
     const unit = stakes === "high" ? 25 : 5;
     bet = Math.max(cfg.minBet, Math.min(pot, Math.round(raw / unit) * unit));
-    edge = Math.round((equity - requiredEquity(pot, bet)) * 10) / 10;
+    edge = Math.round((equity - requiredEquity(pot, bet, players)) * 10) / 10;
     if (Math.abs(edge) >= floorEdge) break;
   }
   return {
     id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
     createdAt: Date.now(), street, draw,
     hand: built.hand, board: built.board,
-    pot, bet, equity, edge,
+    pot, bet, equity, edge, players,
   };
 }
 
@@ -1420,10 +1532,34 @@ function moneyPileHTML(label, amount, accent, compact) {
   '</div>';
 }
 
+/** the row of villains for a multiway pot (bettor first, then callers) */
+function opponentSeatsHTML(s) {
+  const villains = s.players - 1;
+  let out = "";
+  for (let i = 0; i < villains; i++) {
+    const isBettor = i === 0;
+    out += '<div class="v-seat' + (isBettor ? " bettor" : "") + '">' +
+      '<div class="v-cards">' + cardBackHTML(22, 0, 60 + i * 60) + cardBackHTML(22, 0, 100 + i * 60) + '</div>' +
+      '<span class="v-tag">' + (isBettor ? "bets €" + usd(s.bet) : "calls €" + usd(s.bet)) + '</span>' +
+    '</div>';
+  }
+  return out;
+}
+
 function tableSceneHTML(s, revealed) {
   const isTurn = s.street === "turn";
   const flop = s.board.slice(0, 3);
   const turn = s.board[3];
+  const multiway = s.players > 2;
+  const opponents = multiway
+    ? '<div class="villains-row">' + opponentSeatsHTML(s) + '</div>' +
+      '<div class="players-badge"><b>' + s.players + '</b> in hand · 6-max</div>'
+    : '<div class="villain-zone">' +
+        '<div style="display:flex;gap:2px">' + cardBackHTML(30, 4, 80) + cardBackHTML(30, -3, 160) + '</div>' +
+        '<span class="villain-tag">Villain</span>' +
+        '<div class="villain-bet">' + moneyPileHTML("Bets", s.bet, true, true) + '</div>' +
+      '</div>';
+  const toWin = s.pot + (s.players - 1) * s.bet;
 
   let burst = "";
   if (revealed && revealed.correct) {
@@ -1459,11 +1595,7 @@ function tableSceneHTML(s, revealed) {
       '</svg>' +
       '<div class="bet-ring"></div>' +
       '<div class="pot-zone">' + moneyPileHTML("Pot", s.pot) + '</div>' +
-      '<div class="villain-zone">' +
-        '<div style="display:flex;gap:2px">' + cardBackHTML(30, 4, 80) + cardBackHTML(30, -3, 160) + '</div>' +
-        '<span class="villain-tag">Villain</span>' +
-        '<div class="villain-bet">' + moneyPileHTML("Bets", s.bet, true, true) + '</div>' +
-      '</div>' +
+      opponents +
       '<div class="placard-zone"><div class="placard">' +
         '<p class="p-street">' + (isTurn ? "The Turn" : "The Flop") + '</p>' +
         (S.settings.outsMode === "hidden" && !revealed
@@ -1471,7 +1603,7 @@ function tableSceneHTML(s, revealed) {
           : '<p class="p-draw">' + s.draw.label + '</p><span class="p-outs"><i></i>' + s.draw.outs + ' outs</span>') +
       '</div></div>' +
       '<div class="board-row">' + boardCards + '<div class="board-gap"></div>' + turnCard + '</div>' +
-      '<div class="call-strip"><p>call <b>€' + usd(s.bet) + '</b> to win <b>€' + usd(s.pot + s.bet) + '</b></p></div>' +
+      '<div class="call-strip"><p>call <b>€' + usd(s.bet) + '</b> to win <b>€' + usd(toWin) + '</b>' + (multiway ? ' · ' + s.players + '-way pot' : '') + '</p></div>' +
       '<div class="hero-zone">' +
         '<div class="hero-cards">' +
           cardHTML(s.hand[0], { w: 56, tilt: -7, delay: 620, hero: true }) +
@@ -1538,7 +1670,8 @@ function fmtPts(n) {
 }
 
 function verdictHTML(s, r, tolerance) {
-  const req = requiredEquity(s.pot, s.bet);
+  const req = requiredEquity(s.pot, s.bet, s.players);
+  const finalPot = s.pot + s.players * s.bet; // everyone in the hand puts in the bet
   const plusEV = s.edge > 0;
   const exact = exactEquity(s.draw.outs, s.street);
   const mult = s.street === "flop" ? 4 : 2;
@@ -1568,7 +1701,7 @@ function verdictHTML(s, r, tolerance) {
     body = '<div class="recap">' +
       (r.outsEntered !== null ? '<p><span class="brass">outs</span> = ' + s.draw.outs + ' — counted correctly ✓</p>' : "") +
       '<p><span class="brass">equity</span> = ' + s.draw.outs + ' outs × ' + mult + ' = ' + s.equity + '% <span class="dim">· exact ' + exact.toFixed(1) + '%</span></p>' +
-      '<p><span class="brass">pot odds</span> = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' = needs ' + req.toFixed(1) + '%</p>' +
+      '<p><span class="brass">pot odds</span> = €' + s.bet + ' ÷ €' + finalPot + (s.players > 2 ? ' (×' + s.players + ' players)' : '') + ' = needs ' + req.toFixed(1) + '%</p>' +
       '<p><span class="brass">edge</span> = ' + s.equity + '% − ' + req.toFixed(1) + '% = <b>' + fmtPts(s.edge) + ' pts</b> → ' + (plusEV ? "call, +EV" : "fold, −EV") + '</p>' +
       '<p class="meta">tolerance ±' + tolerance + ' pts · sign ' + (r.signOk ? "✓" : "✗") + ' · magnitude ✓</p>' +
     '</div>';
@@ -1598,14 +1731,14 @@ function verdictHTML(s, r, tolerance) {
       diag = "You entered your equity itself (" + s.equity + "%). The edge is not the equity — it is how far the equity sits above the bar the pot is offering: " +
         s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
     } else if (Math.abs(r.entered - req) <= 1.5) {
-      diag = "You entered the pot-odds breakeven (€" + s.bet + " ÷ €" + (s.pot + 2 * s.bet) + " ≈ " + req.toFixed(1) +
+      diag = "You entered the pot-odds breakeven (€" + s.bet + " ÷ €" + finalPot + " ≈ " + req.toFixed(1) +
         "%) — that is the bar, not the distance to it. The edge is equity minus that bar: " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
     } else if (Math.abs(r.entered - euroEV) <= Math.max(3, Math.abs(euroEV) * 0.05)) {
       diag = "That is the EV of the call in euros (≈" + fmtMoney(euroEV) + ") — old habit! This table grades the decision itself: how many percentage points your equity (" +
         s.equity + "%) beats the pot odds (" + req.toFixed(1) + "%) by → " + fmtPts(s.edge) + " pts.";
     } else {
       diag = "Re-run it slowly, one operation at a time: " + s.draw.outs + " outs × " + mult + " = " + s.equity + "% equity. Pot odds: €" + s.bet +
-        " to call into €" + (s.pot + 2 * s.bet) + " = needs " + req.toFixed(1) + "%. Edge = " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
+        " to call into €" + finalPot + (s.players > 2 ? " (" + s.players + "-way)" : "") + " = needs " + req.toFixed(1) + "%. Edge = " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
     }
 
     /* bd (the outs breakdown) was computed above for the diagnosis */
@@ -1630,9 +1763,10 @@ function verdictHTML(s, r, tolerance) {
             ? 'Two cards are still to come (turn + river), so use the <span class="brass">Rule of 4</span>: '
             : 'Only the river is left, so use the <span class="brass">Rule of 2</span>: ') +
           '<span class="mono">' + s.draw.outs + ' × ' + mult + ' = ' + s.equity + '%</span> <span class="dim">· exact ' + exact.toFixed(1) + '%</span></p>') +
-        coachStepHTML("III", "What the pot is offering",
-          '<p>Calling <span class="mono">€' + s.bet + '</span> grows the pot to <span class="mono">€' + (s.pot + 2 * s.bet) +
-          '</span>. Pot odds = €' + s.bet + ' ÷ €' + (s.pot + 2 * s.bet) + ' → you need <span class="mono">' + req.toFixed(1) + '%</span> equity to break even.</p>') +
+        coachStepHTML("III", "What the pot is offering" + (s.players > 2 ? " · " + s.players + "-way" : ""),
+          '<p>Calling <span class="mono">€' + s.bet + '</span>' + (s.players > 2 ? ' with <span class="mono">' + s.players + '</span> players in the hand grows' : ' grows') +
+          ' the pot to <span class="mono">€' + finalPot + '</span> (€' + s.pot + ' + ' + s.players + ' × €' + s.bet +
+          '). Pot odds = €' + s.bet + ' ÷ €' + finalPot + ' → you need <span class="mono">' + req.toFixed(1) + '%</span> equity to break even.</p>') +
         coachStepHTML("IV", "The edge — what you're graded on",
           '<p class="mono">edge = equity − pot odds</p>' +
           '<p class="mono">&nbsp;&nbsp;&nbsp;&nbsp;= ' + s.equity + '% − ' + req.toFixed(1) + '% = <b>' + fmtPts(s.edge) + ' pts</b></p>' +
@@ -1993,6 +2127,9 @@ function helpHTML() {
 const S = {
   settings: loadSettings(),
   history: loadHistory(),
+  screen: "lobby",      // "lobby" | "tutorial" | "game"
+  gameMode: "heads",    // "heads" (vs 1) | "multi" (vs 2-5 villains, 6-max)
+  tutorialTab: "heads", // which academy lesson is open
   scenario: null,
   phase: "play",        // "outs" (count outs) → "play" (enter edge) → "revealed"
   sign: "+",
@@ -2006,8 +2143,201 @@ const S = {
   helpOpen: false,
   dealStart: Date.now(),
 };
-S.scenario = generateScenario(S.settings.streetMode, S.settings.stakes, S.settings.tolerance);
-if (S.settings.outsMode === "hidden") S.phase = "outs";
+
+/* ------------------------------ screens · lobby · academy ------------------------------ */
+function setScreen(name) {
+  S.screen = name;
+  $("#lobbyScreen").hidden = name !== "lobby";
+  $("#tutorialScreen").hidden = name !== "tutorial";
+  $("#gameScreen").hidden = name !== "game";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (name === "lobby") { $("#lobbyScreen").innerHTML = lobbyHTML(); }
+  else if (name === "tutorial") { $("#tutorialScreen").innerHTML = tutorialHTML(); }
+  else { renderGame(); }
+}
+function dealScenario() {
+  const players = S.gameMode === "multi" ? 3 + rnd(4) : 2; // 6-max: you + 2..5 villains
+  S.scenario = generateScenario(S.settings.streetMode, S.settings.stakes, S.settings.tolerance, players);
+  S.phase = S.settings.outsMode === "hidden" ? "outs" : "play";
+  S.sign = "+"; S.digits = ""; S.outsEntered = null; S.outsOk = null; S.result = null;
+  S.dealStart = Date.now();
+}
+function startGame(mode) {
+  S.gameMode = mode;
+  dealScenario();
+  setScreen("game");
+  sound.cardDeal();
+}
+function goLobby() { setScreen("lobby"); }
+function openTutorial() { setScreen("tutorial"); }
+function setTutorialTab(tab) { S.tutorialTab = tab; $("#tutorialScreen").innerHTML = tutorialHTML(); }
+function renderGame() {
+  renderTopbar(); renderSegs(); renderTable(); renderTerminal();
+  renderSession(); renderStats(); renderHeader();
+}
+function renderTopbar() { $("#gameTopbar").innerHTML = topbarHTML(); }
+
+function topbarHTML() {
+  const multi = S.gameMode === "multi";
+  return '<button type="button" class="topbar-back" data-act="go-lobby" title="back to the floor">← Floor</button>' +
+    '<div class="topbar-mode">' +
+      '<span class="chip">' + (multi ? 'FULL RING · <b>6-max</b>' : 'HEADS-UP · <b>1 villain</b>') + '</span>' +
+      (multi && S.scenario ? '<span class="chip"><b>' + S.scenario.players + '</b> in this pot</span>' : '') +
+    '</div>';
+}
+
+function feltSeats(n) {
+  const seats = [[50, 88, true]];
+  const layouts = {
+    1: [[50, 6]],
+    2: [[16, 26], [84, 26]],
+    3: [[12, 58], [24, 10], [76, 10], [88, 58]],
+    4: [[10, 52], [24, 8], [50, 2], [76, 8], [90, 52]],
+    5: [[9, 48], [20, 10], [40, 2], [60, 2], [80, 10], [91, 48]],
+  };
+  (layouts[n - 1] || layouts[5]).forEach((p) => seats.push([p[0], p[1], false]));
+  return seats;
+}
+function pipsHTML(n) {
+  let out = "";
+  for (let i = 0; i < n; i++) out += '<i class="on' + (i === 0 ? ' you' : '') + '"></i>';
+  return out;
+}
+
+function lobbyHTML() {
+  const headsSeats = feltSeats(2).map((s) => '<span class="lt-seat' + (s[2] ? " you" : "") + '" style="left:calc(' + s[0] + '% - 7px);top:calc(' + s[1] + '% - 7px)"></span>').join("");
+  const multiSeats = feltSeats(6).map((s) => '<span class="lt-seat' + (s[2] ? " you" : "") + '" style="left:calc(' + s[0] + '% - 7px);top:calc(' + s[1] + '% - 7px)"></span>').join("");
+  const spade = suitIconHTML("s", 30);
+  return '<div class="lobby">' +
+    '<div class="lobby-head">' +
+      '<p class="eyebrow">Casino de Barcelona · Sala de Póker</p>' +
+      '<h2>Take a seat, <em>amigo</em></h2>' +
+      '<p class="sub">Every hand is a drawing hand facing a bet. Count your outs, read the pot odds, and lock in the edge. Learn it in the academy first — or sit down and train. 6-max no-limit hold&#39;em.</p>' +
+    '</div>' +
+    '<div class="lobby-grid">' +
+      '<button type="button" class="lobby-academy" data-act="open-tutorial">' +
+        '<span class="la-badge">' + suitIconHTML("s", 34) + '</span>' +
+        '<span class="la-copy">' +
+          '<p class="t">La Academia — the written tutorial</p>' +
+          '<p class="d">How to calculate the EV of a call, step by step: against <strong>one</strong> player, and against a <strong>full table</strong>. Open it before you play.</p>' +
+        '</span>' +
+        '<span class="la-cta">Open tutorial →</span>' +
+      '</button>' +
+      '<div class="lobby-tables">' +
+        '<button type="button" class="lobby-table heads" data-act="train-heads">' +
+          '<div class="lt-felt">' + headsSeats + '<span class="spade">' + spade + '</span></div>' +
+          '<p class="lt-name">Heads-Up</p>' +
+          '<p class="lt-vs">you vs <strong>1</strong> villain</p>' +
+          '<div class="lt-pips">' + pipsHTML(2) + '</div>' +
+          '<span class="lt-cta">Sit down →</span>' +
+        '</button>' +
+        '<button type="button" class="lobby-table multi" data-act="train-multi">' +
+          '<div class="lt-felt">' + multiSeats + '<span class="spade">' + spade + '</span></div>' +
+          '<p class="lt-name">Full Ring</p>' +
+          '<p class="lt-vs">you vs up to <strong>5</strong> villains · 6-max</p>' +
+          '<div class="lt-pips">' + pipsHTML(6) + '</div>' +
+          '<span class="lt-cta">Sit down →</span>' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function tutorialHTML() {
+  const tab = S.tutorialTab;
+  return '<div class="tut">' +
+    '<div class="tut-top">' +
+      '<button type="button" class="topbar-back" data-act="tut-back">← Back to the floor</button>' +
+      '<div class="tut-tabs">' +
+        '<button type="button" class="tut-tab' + (tab === "heads" ? " on" : "") + '" data-act="tut-tab" data-val="heads">vs One Player</button>' +
+        '<button type="button" class="tut-tab' + (tab === "multi" ? " on" : "") + '" data-act="tut-tab" data-val="multi">vs Multiple Players</button>' +
+      '</div>' +
+      '<button type="button" class="lt-cta" style="border-color:rgba(62,156,124,.5);color:var(--felt-400)" data-act="' + (tab === "heads" ? "train-heads" : "train-multi") + '">Train this →</button>' +
+    '</div>' +
+    (tab === "heads" ? tutorialHeadsHTML() : tutorialMultiHTML()) +
+  '</div>';
+}
+
+function tutorialHeadsHTML() {
+  return '<div class="lesson">' +
+    '<h3><span class="num">1</span>The situation</h3>' +
+    '<p>You hold a <strong>draw</strong> on the flop or turn. Your single opponent (the villain) bets <strong>€B</strong> into a pot of <strong>€P</strong>. You must decide: <strong>call</strong> or <strong>fold</strong>. The answer is pure arithmetic — compare your chance of winning (equity) to the price the pot is offering (pot odds).</p>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">2</span>Count your outs, get your equity</h3>' +
+    '<p><strong>Outs</strong> are the unseen cards that complete your draw. Convert them to equity with the rule of 4 &amp; 2:</p>' +
+    '<div class="callout"><span class="mono">equity ≈ outs × 4</span> on the <strong>flop</strong> (two cards to come) · <span class="mono">equity ≈ outs × 2</span> on the <strong>turn</strong> (one card to come)</div>' +
+    '<p>A flush draw has <strong>9 outs</strong> → 9 × 4 = <strong>36%</strong> on the flop. An open-ender has <strong>8 outs</strong> → 32%. A gutshot has <strong>4 outs</strong> → 16%.</p>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">3</span>What the pot is offering — pot odds</h3>' +
+    '<p>You call <strong>€B</strong>. If you win, the final pot is the old pot, plus the villain&#39;s bet, plus your call: <span class="mono">P + B + B = P + 2B</span>. Your required share is your call divided by that final pot:</p>' +
+    '<div class="callout"><span class="mono">pot odds = B ÷ (P + 2B)</span></div>' +
+    '<p>This is the <strong>breakeven equity</strong> — the minimum chance of winning you need for the call to pay off.</p>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">4</span>The edge — call or fold</h3>' +
+    '<div class="callout"><span class="mono">edge = equity − pot odds</span>. Positive → <strong>call</strong> (+EV). Negative → <strong>fold</strong> (−EV).</div>' +
+    '<div class="example">' +
+      '<p class="e-title">Worked example · flop flush draw, heads-up</p>' +
+      '<p class="line">You have 9 outs on the flop → equity = 9 × 4 = <b>36%</b></p>' +
+      '<p class="line">Pot = €100, villain bets €50 → final pot = 100 + 50 + 50 = <b>€200</b></p>' +
+      '<p class="line">Pot odds = 50 ÷ 200 = <b>25%</b></p>' +
+      '<p class="line">Edge = 36% − 25% = <span class="good">+11 pts → CALL</span></p>' +
+    '</div>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">5</span>Why this works</h3>' +
+    '<p>You pay €50. 36% of the time you win €200, 64% of the time you lose €50. On average: <span class="mono">0.36 × 200 − 50 = +€22</span> per call. Any positive edge prints money over hundreds of hands — that is all +EV means.</p>' +
+  '</div>';
+}
+
+function tutorialMultiHTML() {
+  return '<div class="lesson">' +
+    '<h3><span class="num">1</span>The situation</h3>' +
+    '<p>Same draw, but now <strong>N players</strong> are in the hand (you plus several villains) — up to 6 at this table. One villain bets <strong>€B</strong> into pot <strong>€P</strong> and the others call. You&#39;re deciding whether to call too. The equity part is unchanged — what changes is the <strong>price</strong>, because there&#39;s much more money in the middle.</p>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">2</span>Equity is the same</h3>' +
+    '<p>Your draw still has the same outs, so equity is still <span class="mono">outs × 4</span> (flop) or <span class="mono">outs × 2</span> (turn). A flush draw is still ≈ <strong>36%</strong> to hit on the flop.</p>' +
+    '<div class="callout warn"><strong>Real-game nuance:</strong> with more players, your chance of <em>winning the whole pot</em> is a little lower — someone may redraw or already have you beat. In this trainer we keep equity at the clean <span class="mono">outs × 4 / 2</span> number so the arithmetic stays exact. The multiway lesson here is the pot odds.</div>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">3</span>Pot odds with N players</h3>' +
+    '<p>Everyone in the hand puts in <strong>€B</strong> this street — the bettor, the callers, and you. So the final pot is the old pot plus <strong>N</strong> bets:</p>' +
+    '<div class="callout"><span class="mono">pot odds = B ÷ (P + N × B)</span> where <strong>N</strong> = total players in the hand (including you)</div>' +
+    '<p>Notice: heads-up is just the special case <strong>N = 2</strong> → <span class="mono">B ÷ (P + 2B)</span>. One formula covers both.</p>' +
+    '<p><strong>The insight:</strong> more players → bigger final pot → <em>lower</em> breakeven %. Multiway, your draw needs far less equity to be a profitable call. That&#39;s why draws love multiway pots.</p>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">4</span>Side by side</h3>' +
+    '<p>Same hand, same bet — only the number of players changes:</p>' +
+    '<div class="tut-compare">' +
+      '<div class="col h">' +
+        '<p class="h-title">Heads-up · N = 2</p>' +
+        '<p class="line">Pot €100, bet €50</p>' +
+        '<p class="line">Final pot = 100 + 2×50 = €200</p>' +
+        '<p class="line">Pot odds = 50 ÷ 200 = 25%</p>' +
+        '<p class="line">Edge = 36 − 25 = <span class="good">+11</span></p>' +
+      '</div>' +
+      '<div class="col m">' +
+        '<p class="h-title">Multiway · N = 5</p>' +
+        '<p class="line">Pot €100, bet €50, 5 players</p>' +
+        '<p class="line">Final pot = 100 + 5×50 = €350</p>' +
+        '<p class="line">Pot odds = 50 ÷ 350 = 14.3%</p>' +
+        '<p class="line">Edge = 36 − 14.3 = <span class="good">+21.7</span></p>' +
+      '</div>' +
+    '</div>' +
+    '<div class="callout">The draw went from +11 to <strong>+21.7 pts</strong> just because four more players put money in. The breakeven bar dropped from 25% to 14.3%.</div>' +
+  '</div>' +
+  '<div class="lesson">' +
+    '<h3><span class="num">5</span>Multiway discipline</h3>' +
+    '<p>The math says chase draws multiway — but two cautions for the real table:</p>' +
+    '<p>· A <strong>bigger pot also means bigger losses</strong> when you miss. The +EV call still loses ~2 out of 3 times on the flop.</p>' +
+    '<p>· If the betting is <strong>huge relative to the pot</strong> (an overbet), the bar rises again — recompute, don&#39;t assume.</p>' +
+    '<p>In this trainer, count <strong>N</strong> from the table (the badge shows how many are in), plug into <span class="mono">B ÷ (P + N×B)</span>, and subtract from your equity. That&#39;s the whole trick.</p>' +
+  '</div>';
+}
 
 /* scroll reveals */
 const revealIO = ("IntersectionObserver" in window)
@@ -2025,7 +2355,8 @@ function observeReveals() {
 function renderTable() {
   $("#tableScene").innerHTML = tableSceneHTML(S.scenario, S.result ? { correct: S.result.correct } : null);
   const hidden = S.settings.outsMode === "hidden";
-  $("#handPrompt").innerHTML =
+  const way = S.scenario.players > 2 ? '<b>' + S.scenario.players + '</b> players are in — pot odds use <b>pot + ' + S.scenario.players + '×bet</b>. ' : '';
+  $("#handPrompt").innerHTML = way +
     'Villain bets <b>€' + usd(S.scenario.bet) + '</b> into <b>€' + usd(S.scenario.pot) + '</b> — ' +
     (hidden
       ? 'first <b>count your outs</b> exactly, then compute the edge: how many <b>percentage points</b> does your equity beat (or miss) the pot odds by?'
@@ -2074,15 +2405,9 @@ function renderHeader() {
 }
 
 function newHand() {
-  S.scenario = generateScenario(S.settings.streetMode, S.settings.stakes, S.settings.tolerance);
-  S.phase = S.settings.outsMode === "hidden" ? "outs" : "play";
-  S.sign = "+";
-  S.digits = "";
-  S.outsEntered = null;
-  S.outsOk = null;
-  S.result = null;
-  S.dealStart = Date.now();
+  dealScenario();
   sound.cardDeal();
+  renderTopbar();
   renderTable();
   renderTerminal();
 }
@@ -2223,6 +2548,12 @@ document.addEventListener("click", (e) => {
   if (actBtn) {
     const act = actBtn.dataset.act;
     if (act === "next") newHand();
+    else if (act === "open-tutorial") { sound.uiToggle(true); openTutorial(); }
+    else if (act === "train-heads") { sound.uiToggle(true); startGame("heads"); }
+    else if (act === "train-multi") { sound.uiToggle(true); startGame("multi"); }
+    else if (act === "tut-back") { goLobby(); }
+    else if (act === "tut-tab") { setTutorialTab(actBtn.dataset.val); }
+    else if (act === "go-lobby") { goLobby(); }
     else if (act === "open-help") { S.helpOpen = true; $("#helpModal").classList.remove("hidden"); }
     else if (act === "close-help") { S.helpOpen = false; $("#helpModal").classList.add("hidden"); }
     else if (act === "ask-reset") { S.confirmClear = true; renderStats(); }
@@ -2259,6 +2590,7 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { S.helpOpen = false; $("#helpModal").classList.add("hidden"); }
     return;
   }
+  if (S.screen !== "game") return; // the keypad only listens at the table
   if (S.phase === "revealed" && (e.key.toLowerCase() === "n" || e.key === "Enter")) {
     e.preventDefault();
     newHand();
@@ -2317,12 +2649,8 @@ window.addEventListener("error", (e) => failBanner((e.message || "unknown") + " 
 (function init() {
   const steps = [
     ["help", () => { $("#helpCard").innerHTML = helpHTML(); }],
-    ["settings bar", renderSegs],
     ["header", renderHeader],
-    ["table", renderTable],
-    ["terminal", renderTerminal],
-    ["session", renderSession],
-    ["ledger", renderStats],
+    ["lobby", () => setScreen("lobby")],
   ];
   steps.forEach((step) => {
     try { step[1](); }
