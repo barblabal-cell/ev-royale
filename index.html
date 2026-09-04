@@ -1608,7 +1608,7 @@ function verdictHTML(s, r, tolerance) {
         " to call into €" + (s.pot + 2 * s.bet) + " = needs " + req.toFixed(1) + "%. Edge = " + s.equity + "% − " + req.toFixed(1) + "% = " + fmtPts(s.edge) + " pts.";
     }
 
-    const bd = outsBreakdown(s);
+    /* bd (the outs breakdown) was computed above for the diagnosis */
     const stepI = bd.groups.map((g) => {
       const cards = g.cards.map((cd) => cardHTML(cd, { w: 27, variant: "board" })).join("");
       return '<div>' +
@@ -2331,7 +2331,20 @@ window.addEventListener("error", (e) => failBanner((e.message || "unknown") + " 
       if (window.console) console.error("[EV Royale] init failed at " + step[0], err);
     }
   });
+  window.__EVROYALE_BOOTED__ = true;
 })();
+</script>
+<script>
+/* watchdog: a separate block, so even a parse error in the main script surfaces here */
+window.addEventListener("load", function () {
+  if (window.__EVROYALE_BOOTED__) return;
+  var el = document.createElement("div");
+  el.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:999;max-width:92vw;" +
+    "background:#3a0b14;color:#ffd9de;border:1px solid #d4475f;border-radius:10px;padding:.75rem 1rem;" +
+    "font-family:ui-monospace,monospace;font-size:12px;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.5)";
+  el.textContent = "Dealer error — the table script did not start. Open the browser console (F12) for details, or grab a fresh copy of ev-royale.html.";
+  document.body.appendChild(el);
+});
 </script>
 </body>
 </html>
